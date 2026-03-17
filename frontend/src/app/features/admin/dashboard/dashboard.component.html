@@ -1,0 +1,66 @@
+<div class="dashboard">
+  <div class="dash-header">
+    <h1>Admin Dashboard</h1>
+    <a routerLink="/admin/products" class="manage-btn">Manage Products →</a>
+  </div>
+
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div><p>Loading dashboard...</p>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="stats-grid">
+      <div class="stat-card purple">
+        <div class="stat-icon">📦</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.totalProducts }}</span>
+          <span class="stat-label">Total Products</span>
+        </div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">🛒</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.totalOrders }}</span>
+          <span class="stat-label">Total Orders</span>
+        </div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">💰</div>
+        <div class="stat-info">
+          <span class="stat-value">${{ stats.totalRevenue | number:'1.2-2' }}</span>
+          <span class="stat-label">Total Revenue</span>
+        </div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.pendingOrders }}</span>
+          <span class="stat-label">Pending Orders</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="recent-orders">
+      <h2>Recent Orders</h2>
+      <div class="orders-table" *ngIf="recentOrders.length > 0">
+        <div class="table-header">
+          <span>Order ID</span>
+          <span>Customer</span>
+          <span>Amount</span>
+          <span>Status</span>
+          <span>Date</span>
+        </div>
+        <div class="table-row" *ngFor="let order of recentOrders">
+          <span class="order-id">#{{ order.id }}</span>
+          <span>{{ order.userName }}</span>
+          <span class="amount">${{ order.totalAmount | number:'1.2-2' }}</span>
+          <span class="status-badge" [ngClass]="getStatusClass(order.status)">{{ order.status }}</span>
+          <span class="date">{{ order.createdAt | date:'shortDate' }}</span>
+        </div>
+      </div>
+      <div class="empty-orders" *ngIf="recentOrders.length === 0">
+        <p>No orders yet.</p>
+      </div>
+    </div>
+  </ng-container>
+</div>

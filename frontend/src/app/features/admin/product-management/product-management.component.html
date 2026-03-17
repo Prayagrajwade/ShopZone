@@ -1,0 +1,99 @@
+<div class="pm-page">
+  <div class="pm-header">
+    <h1>Product Management</h1>
+    <button class="add-btn" (click)="openAdd()">+ Add Product</button>
+  </div>
+
+  <div class="success-banner" *ngIf="successMsg">{{ successMsg }}</div>
+
+  <!-- Modal Form -->
+  <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingProduct ? 'Edit Product' : 'Add New Product' }}</h2>
+        <button class="close-btn" (click)="closeForm()">✕</button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" formControlName="name" placeholder="Product name" />
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" formControlName="category" placeholder="e.g. Electronics" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3" placeholder="Product description"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price ($)</label>
+            <input type="number" formControlName="price" step="0.01" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Stock</label>
+            <input type="number" formControlName="stock" min="0" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Image URL</label>
+          <input type="text" formControlName="imageUrl" placeholder="https://..." />
+        </div>
+
+        <div class="form-group toggle-group" *ngIf="editingProduct">
+          <label class="toggle-label">
+            <input type="checkbox" formControlName="isActive" />
+            <span>Active (visible to customers)</span>
+          </label>
+        </div>
+
+        <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" (click)="closeForm()">Cancel</button>
+          <button type="submit" class="save-btn" [disabled]="form.invalid || saving">
+            {{ saving ? 'Saving...' : (editingProduct ? 'Update' : 'Add Product') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Products Table -->
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div><p>Loading products...</p>
+  </div>
+
+  <div class="products-table" *ngIf="!loading">
+    <div class="table-head">
+      <span>Image</span>
+      <span>Name</span>
+      <span>Category</span>
+      <span>Price</span>
+      <span>Stock</span>
+      <span>Status</span>
+      <span>Actions</span>
+    </div>
+    <div class="table-row" *ngFor="let product of products">
+      <img [src]="product.imageUrl" [alt]="product.name" class="thumb" />
+      <span class="product-name">{{ product.name }}</span>
+      <span class="category">{{ product.category }}</span>
+      <span class="price">${{ product.price | number:'1.2-2' }}</span>
+      <span class="stock" [class.low]="product.stock < 10">{{ product.stock }}</span>
+      <span class="status-dot" [class.active]="product.isActive">
+        {{ product.isActive ? '● Active' : '○ Inactive' }}
+      </span>
+      <div class="actions">
+        <button class="edit-btn" (click)="openEdit(product)">Edit</button>
+        <button class="delete-btn" (click)="delete(product)">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>

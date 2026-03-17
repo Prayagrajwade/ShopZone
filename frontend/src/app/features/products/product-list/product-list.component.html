@@ -1,0 +1,62 @@
+<div class="products-page">
+  <div class="page-header">
+    <h1>Our Products</h1>
+    <p>Discover our amazing collection</p>
+  </div>
+
+  <div class="filters">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" [formControl]="searchControl" placeholder="Search products..." />
+    </div>
+
+    <div class="categories">
+      <button class="cat-btn" [class.active]="selectedCategory === ''" (click)="selectCategory('')">All</button>
+      <button class="cat-btn" *ngFor="let cat of categories"
+        [class.active]="selectedCategory === cat" (click)="selectCategory(cat)">
+        {{ cat }}
+      </button>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading products...</p>
+  </div>
+
+  <div class="products-grid" *ngIf="!loading">
+    <div class="product-card" *ngFor="let product of products">
+      <div class="product-img">
+        <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
+        <span class="category-tag">{{ product.category }}</span>
+      </div>
+      <div class="product-info">
+        <h3>{{ product.name }}</h3>
+        <p class="description">{{ product.description }}</p>
+        <div class="product-footer">
+          <span class="price">${{ product.price | number:'1.2-2' }}</span>
+          <span class="stock" [class.low]="product.stock < 10">
+            {{ product.stock > 0 ? product.stock + ' in stock' : 'Out of stock' }}
+          </span>
+        </div>
+        <div class="card-actions">
+          <a [routerLink]="['/products', product.id]" class="btn btn-outline">View Details</a>
+          <button class="btn btn-primary"
+            *ngIf="auth.isLoggedIn && !auth.isAdmin"
+            [disabled]="product.stock === 0 || addingToCart[product.id]"
+            (click)="addToCart(product)">
+            <span *ngIf="successMsg[product.id]">✓ Added!</span>
+            <span *ngIf="!successMsg[product.id] && !addingToCart[product.id]">Add to Cart</span>
+            <span *ngIf="addingToCart[product.id]">Adding...</span>
+          </button>
+          <a routerLink="/login" class="btn btn-primary" *ngIf="!auth.isLoggedIn">Login to Buy</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="products.length === 0">
+      <span>😕</span>
+      <p>No products found</p>
+    </div>
+  </div>
+</div>

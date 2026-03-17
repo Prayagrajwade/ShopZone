@@ -1,0 +1,67 @@
+<div class="success-page">
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="success-container" *ngIf="!loading && order">
+    <div class="success-icon">
+      <div class="checkmark">✓</div>
+    </div>
+
+    <h1>Order Confirmed!</h1>
+    <p class="subtitle">Your order is on the way 🚚</p>
+
+    <div class="status-track">
+      <div class="track-step done">
+        <div class="step-icon">✓</div>
+        <span>Ordered</span>
+      </div>
+      <div class="track-line done"></div>
+      <div class="track-step done">
+        <div class="step-icon">💳</div>
+        <span>Paid</span>
+      </div>
+      <div class="track-line active"></div>
+      <div class="track-step active">
+        <div class="step-icon">🚚</div>
+        <span>On The Way</span>
+      </div>
+      <div class="track-line"></div>
+      <div class="track-step">
+        <div class="step-icon">📦</div>
+        <span>Delivered</span>
+      </div>
+    </div>
+
+    <div class="order-card">
+      <div class="order-header">
+        <div>
+          <span class="order-label">Order ID</span>
+          <span class="order-id">#{{ order.id }}</span>
+        </div>
+        <div>
+          <span class="order-label">Status</span>
+          <span class="status-badge">{{ order.status | titlecase }}</span>
+        </div>
+        <div>
+          <span class="order-label">Total</span>
+          <span class="order-total">${{ order.totalAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="order-items">
+        <h3>Items Ordered</h3>
+        <div class="order-item" *ngFor="let item of order.items">
+          <span class="item-name">{{ item.productName }}</span>
+          <span class="item-qty">× {{ item.quantity }}</span>
+          <span class="item-price">${{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a routerLink="/orders" class="btn btn-outline">View All Orders</a>
+      <a routerLink="/products" class="btn btn-primary">Continue Shopping</a>
+    </div>
+  </div>
+</div>

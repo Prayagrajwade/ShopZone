@@ -1,0 +1,52 @@
+<div class="detail-page">
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="detail-container" *ngIf="product && !loading">
+    <a routerLink="/products" class="back-link">← Back to Products</a>
+
+    <div class="detail-card">
+      <div class="detail-img">
+        <img [src]="product.imageUrl" [alt]="product.name" />
+      </div>
+
+      <div class="detail-info">
+        <span class="category-badge">{{ product.category }}</span>
+        <h1>{{ product.name }}</h1>
+        <p class="description">{{ product.description }}</p>
+
+        <div class="price-row">
+          <span class="price">${{ product.price | number:'1.2-2' }}</span>
+          <span class="stock-badge" [class.low]="product.stock < 10" [class.out]="product.stock === 0">
+            {{ product.stock > 0 ? product.stock + ' in stock' : 'Out of stock' }}
+          </span>
+        </div>
+
+        <ng-container *ngIf="auth.isLoggedIn && !auth.isAdmin">
+          <div class="quantity-row">
+            <span class="qty-label">Quantity:</span>
+            <div class="qty-control">
+              <button (click)="decrement()" [disabled]="quantity <= 1">−</button>
+              <span>{{ quantity }}</span>
+              <button (click)="increment()" [disabled]="quantity >= product.stock">+</button>
+            </div>
+          </div>
+
+          <button class="add-btn" (click)="addToCart()"
+            [disabled]="product.stock === 0 || adding">
+            <span *ngIf="added">✓ Added to Cart!</span>
+            <span *ngIf="!added && !adding">🛒 Add to Cart — ${{ (product.price * quantity) | number:'1.2-2' }}</span>
+            <span *ngIf="adding">Adding...</span>
+          </button>
+
+          <a routerLink="/cart" class="view-cart-link" *ngIf="added">View Cart →</a>
+        </ng-container>
+
+        <a routerLink="/login" class="add-btn login-prompt" *ngIf="!auth.isLoggedIn">
+          Login to Purchase
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

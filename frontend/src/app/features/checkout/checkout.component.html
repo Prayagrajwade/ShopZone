@@ -1,0 +1,53 @@
+<div class="checkout-page">
+  <h1>Checkout 💳</h1>
+
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Preparing your checkout...</p>
+  </div>
+
+  <div class="checkout-layout" *ngIf="!loading">
+    <!-- Order Summary -->
+    <div class="order-summary">
+      <h2>Order Summary</h2>
+      <div class="summary-items">
+        <div class="summary-item" *ngFor="let item of cartItems">
+          <img [src]="item.imageUrl" [alt]="item.productName" />
+          <div class="item-info">
+            <span class="item-name">{{ item.productName }}</span>
+            <span class="item-qty">Qty: {{ item.quantity }}</span>
+          </div>
+          <span class="item-price">${{ item.subtotal | number:'1.2-2' }}</span>
+        </div>
+      </div>
+      <div class="summary-footer">
+        <div class="summary-row"><span>Subtotal</span><span>${{ total | number:'1.2-2' }}</span></div>
+        <div class="summary-row"><span>Shipping</span><span class="free">FREE</span></div>
+        <div class="summary-divider"></div>
+        <div class="summary-total"><span>Total</span><span>${{ total | number:'1.2-2' }}</span></div>
+      </div>
+    </div>
+
+    <!-- Payment -->
+    <div class="payment-section">
+      <h2>Payment Details</h2>
+
+      <div id="payment-element" class="stripe-element"></div>
+
+      <div class="error-banner" *ngIf="error">{{ error }}</div>
+
+      <button class="pay-btn" (click)="placeOrder()" [disabled]="processing || cartItems.length === 0">
+        <span *ngIf="!processing">Pay ${{ total | number:'1.2-2' }} →</span>
+        <span *ngIf="processing" class="processing">
+          <span class="dots">Processing</span>
+        </span>
+      </button>
+
+      <div class="security-note">
+        🔒 Payments secured by Stripe. Your card details are never stored.
+      </div>
+
+      <a routerLink="/cart" class="back-link">← Back to Cart</a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,44 @@
+<div class="orders-page">
+  <h1>My Orders</h1>
+
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading your orders...</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && orders.length === 0">
+    <span>📭</span>
+    <h3>No orders yet</h3>
+    <p>Start shopping to place your first order!</p>
+    <a routerLink="/products" class="shop-btn">Browse Products</a>
+  </div>
+
+  <div class="orders-list" *ngIf="!loading && orders.length > 0">
+    <div class="order-card" *ngFor="let order of orders">
+      <div class="order-header" (click)="toggleOrder(order.id)">
+        <div class="order-meta">
+          <span class="order-id">#{{ order.id }}</span>
+          <span class="order-date">{{ order.createdAt | date:'mediumDate' }}</span>
+        </div>
+        <div class="order-status" [ngClass]="order.status">
+          {{ getStatusIcon(order.status) }} {{ getStatusLabel(order.status) }}
+        </div>
+        <div class="order-total">${{ order.totalAmount | number:'1.2-2' }}</div>
+        <span class="expand-icon">{{ expandedOrderId === order.id ? '▲' : '▼' }}</span>
+      </div>
+
+      <div class="order-items" *ngIf="expandedOrderId === order.id">
+        <div class="order-item" *ngFor="let item of order.items">
+          <span class="item-name">{{ item.productName }}</span>
+          <span class="item-qty">× {{ item.quantity }}</span>
+          <span class="item-price">${{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</span>
+        </div>
+        <div class="order-item total-row">
+          <span>Total</span>
+          <span></span>
+          <span class="bold">${{ order.totalAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

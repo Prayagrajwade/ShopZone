@@ -1,0 +1,55 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ShopAPI.DTOs;
+using ShopAPI.Interfaces;
+
+namespace ShopAPI.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class CartController : ControllerBase
+{
+    private readonly ICartService _cartService;
+
+    public CartController(ICartService cartService) => _cartService = cartService;
+
+    private int UserId =>
+        int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    [HttpGet]
+    public async Task<IActionResult> GetCart()
+    {
+        var items = await _cartService.GetCartAsync(UserId);
+        return Ok(items);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AddToCart(AddToCartDto dto)
+    {
+        var success = await _cartService.AddToCartAsync(UserId, dto);
+        return success ? Ok(new { message = "Added to cart." }) : BadRequest(new { message = "Product not found or inactive." });
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateQuantity(int id, [FromBody] int quantity)
+    {
+        var success = await _cartService.UpdateQuantityAsync(UserId, id, quantity);
+        return success ? Ok(new { message = "Cart updated." }) : NotFound();
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> RemoveFromCart(int id)
+    {
+        var success = await _cartService.RemoveItemAsync(UserId, id);
+        return success ? Ok(new { message = "Item removed." }) : NotFound();
+    }
+
+    [HttpDelete]
+    public async Task<IActionResult> ClearCart()
+    {
+        await _cartService.ClearCartAsync(UserId);
+        return Ok(new { message = "Cart cleared." });
+    }
+}

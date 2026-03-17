@@ -1,0 +1,46 @@
+<nav class="navbar">
+  <div class="nav-brand">
+    <a routerLink="/products" class="brand-link">
+      <span class="brand-icon">🛍</span>
+      <span class="brand-name">ShopZone</span>
+    </a>
+  </div>
+
+  <div class="nav-links">
+    <a routerLink="/products" routerLinkActive="active" class="nav-link">Products</a>
+
+    <ng-container *ngIf="auth.isLoggedIn">
+      <ng-container *ngIf="auth.isAdmin">
+        <a routerLink="/admin" routerLinkActive="active" class="nav-link">Dashboard</a>
+        <a routerLink="/admin/products" routerLinkActive="active" class="nav-link">Manage Products</a>
+      </ng-container>
+
+      <ng-container *ngIf="!auth.isAdmin">
+        <a routerLink="/cart" routerLinkActive="active" class="nav-link cart-link">
+          <span>Cart</span>
+          <span class="cart-badge" *ngIf="(cartService.cartItems$ | async)?.length">
+            {{ cartService.cartCount }}
+          </span>
+        </a>
+        <a routerLink="/orders" routerLinkActive="active" class="nav-link">My Orders</a>
+      </ng-container>
+    </ng-container>
+  </div>
+
+  <div class="nav-auth">
+    <ng-container *ngIf="!auth.isLoggedIn">
+      <a routerLink="/login" class="btn btn-outline">Login</a>
+      <a routerLink="/register" class="btn btn-primary">Register</a>
+    </ng-container>
+
+    <ng-container *ngIf="auth.isLoggedIn">
+      <span class="user-greeting">Hi, {{ auth.currentUser?.name }}</span>
+      <span class="role-badge" [class.admin]="auth.isAdmin">{{ auth.isAdmin ? 'Admin' : 'User' }}</span>
+      <button class="btn btn-outline" (click)="logout()">Logout</button>
+    </ng-container>
+  </div>
+</nav>
+
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>

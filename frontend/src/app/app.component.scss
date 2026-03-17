@@ -1,0 +1,105 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  height: 64px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+
+  .brand-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    .brand-icon { font-size: 1.5rem; }
+    .brand-name { font-size: 1.25rem; font-weight: 700; color: #1a1a2e; }
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+
+    .nav-link {
+      text-decoration: none;
+      color: #6b7280;
+      font-weight: 500;
+      transition: color 0.2s;
+      &:hover, &.active { color: #6366f1; }
+
+      &.cart-link {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        position: relative;
+
+        .cart-badge {
+          background: #ef4444;
+          color: white;
+          border-radius: 9999px;
+          padding: 0 6px;
+          font-size: 0.7rem;
+          font-weight: 700;
+          min-width: 18px;
+          text-align: center;
+        }
+      }
+    }
+  }
+
+  .nav-auth {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .user-greeting { color: #374151; font-size: 0.9rem; }
+
+    .role-badge {
+      background: #e0e7ff;
+      color: #4338ca;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+
+      &.admin {
+        background: #fef3c7;
+        color: #92400e;
+      }
+    }
+  }
+}
+
+.main-content {
+  min-height: calc(100vh - 64px);
+  background: #f9fafb;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &.btn-primary {
+    background: #6366f1;
+    color: white;
+    &:hover { background: #4f46e5; }
+  }
+
+  &.btn-outline {
+    background: transparent;
+    border: 1.5px solid #d1d5db;
+    color: #374151;
+    &:hover { border-color: #6366f1; color: #6366f1; }
+  }
+}

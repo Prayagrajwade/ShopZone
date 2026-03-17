@@ -1,0 +1,112 @@
+.success-page {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+
+  .loading { .spinner { width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite; } }
+
+  .success-container {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+
+    .success-icon {
+      margin-bottom: 1.5rem;
+      .checkmark {
+        width: 80px; height: 80px;
+        background: #10b981; color: white;
+        border-radius: 50%;
+        font-size: 2.5rem;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto;
+        animation: pop 0.5s ease;
+      }
+    }
+
+    h1 { font-size: 2rem; font-weight: 800; color: #064e3b; margin-bottom: 0.5rem; }
+    .subtitle { color: #6b7280; font-size: 1.1rem; margin-bottom: 2rem; }
+
+    .status-track {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+      gap: 0;
+
+      .track-step {
+        display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+        .step-icon {
+          width: 44px; height: 44px;
+          border: 2px solid #d1d5db;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          background: white; font-size: 1.1rem;
+        }
+        span { font-size: 0.75rem; color: #9ca3af; white-space: nowrap; }
+
+        &.done .step-icon { border-color: #10b981; background: #d1fae5; }
+        &.done span { color: #065f46; }
+        &.active .step-icon { border-color: #f59e0b; background: #fef3c7; animation: pulse 1.5s infinite; }
+        &.active span { color: #92400e; font-weight: 600; }
+      }
+
+      .track-line {
+        flex: 1; height: 2px; background: #e5e7eb; max-width: 60px;
+        &.done { background: #10b981; }
+        &.active { background: linear-gradient(90deg, #10b981, #f59e0b); }
+      }
+    }
+
+    .order-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.75rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin-bottom: 2rem;
+      text-align: left;
+
+      .order-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+
+        > div { display: flex; flex-direction: column; gap: 0.25rem; }
+
+        .order-label { font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+        .order-id { font-weight: 700; color: #1a1a2e; }
+        .status-badge { display: inline-block; background: #fef3c7; color: #92400e; padding: 2px 10px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; }
+        .order-total { font-weight: 700; color: #6366f1; font-size: 1.1rem; }
+      }
+
+      .order-items {
+        h3 { font-size: 0.9rem; color: #374151; margin-bottom: 0.75rem; }
+        .order-item {
+          display: flex; align-items: center; padding: 0.5rem 0;
+          border-bottom: 1px solid #f3f4f6;
+          .item-name { flex: 1; font-size: 0.875rem; color: #374151; }
+          .item-qty { color: #9ca3af; font-size: 0.85rem; margin-right: 1rem; }
+          .item-price { font-weight: 600; color: #6366f1; font-size: 0.875rem; }
+        }
+      }
+    }
+
+    .actions {
+      display: flex; gap: 1rem; justify-content: center;
+
+      .btn {
+        padding: 0.75rem 1.75rem; border-radius: 10px; font-weight: 600; text-decoration: none; transition: all 0.2s;
+        &.btn-primary { background: #6366f1; color: white; &:hover { background: #4f46e5; } }
+        &.btn-outline { border: 1.5px solid #d1d5db; color: #374151; &:hover { border-color: #6366f1; color: #6366f1; } }
+      }
+    }
+  }
+}
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } }
