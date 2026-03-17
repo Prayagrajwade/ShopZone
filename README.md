@@ -8,7 +8,7 @@
 
 ```
 backend/
-├── Controllers/          ← Thin — routing + HTTP only, zero business logic
+├── Controllers/      
 │   ├── AuthController.cs
 │   ├── ProductsController.cs
 │   ├── CartController.cs
@@ -21,8 +21,8 @@ backend/
 │   └── IOrderService.cs
 │
 ├── Services/
-│   ├── JwtService.cs     ← Token generation
-│   └── Impl/             ← Business logic lives here
+│   ├── JwtService.cs    
+│   └── Impl/             
 │       ├── AuthService.cs
 │       ├── ProductService.cs
 │       ├── CartService.cs
