@@ -16,6 +16,7 @@ builder.Services.AddScoped<IProductService, ShopAPI.Services.Impl.ProductService
 builder.Services.AddScoped<ICartService,    ShopAPI.Services.Impl.CartService>();
 builder.Services.AddScoped<IOrderService,   ShopAPI.Services.Impl.OrderService>();
 builder.Services.AddScoped<IStripeWebhookService, ShopAPI.Services.Impl.StripeWebhookService>();
+builder.Services.Configure<PaymentSettings>(builder.Configuration.GetSection("Payment"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

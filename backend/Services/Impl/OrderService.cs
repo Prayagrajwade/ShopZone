@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Stripe;
 
 namespace ShopAPI.Services.Impl;
@@ -6,12 +7,14 @@ public class OrderService : IOrderService
 {
     private readonly AppDbContext _db;
     private readonly IConfiguration _config;
+    private readonly PaymentSettings _paymentSettings;
 
-    public OrderService(AppDbContext db, IConfiguration config)
+    public OrderService(AppDbContext db, IConfiguration config, IOptions<PaymentSettings> paymentOptions)
     {
         _db = db;
         _config = config;
         StripeConfiguration.ApiKey = config["Stripe:SecretKey"];
+        _paymentSettings = paymentOptions.Value;
     }
 
     public async Task<PaymentIntentDto> CreatePaymentIntentAsync(int userId)
@@ -30,7 +33,7 @@ public class OrderService : IOrderService
         var options = new PaymentIntentCreateOptions
         {
             Amount   = amountCents,
-            Currency = "usd",
+            Currency = _paymentSettings.Currency,
             AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
             {
                 Enabled = true
