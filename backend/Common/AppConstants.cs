@@ -1,4 +1,6 @@
-﻿namespace ShopAPI.Common
+﻿using System.Net.NetworkInformation;
+
+namespace ShopAPI.Common
 {
     public static class AppConstants
     {
@@ -49,5 +51,11 @@
             public const string CartEmpty = "Cart is empty.";
             public const string PaymentNotCompleted = "Payment not completed.";
         }
+
+        public static class TemeplateType
+        {
+            public const string Invoice = "Invoice";
+        }
+
     }
 }

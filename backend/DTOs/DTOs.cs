@@ -22,3 +22,5 @@ public record ConfirmOrderResponseDto(int OrderId, string Message);
 
 // Payment
 public record PaymentIntentDto(string ClientSecret, string PaymentIntentId, decimal Amount);
+
+public record UserDto(string Name);

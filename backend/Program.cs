@@ -1,7 +1,5 @@
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using ShopAPI.Services;
+using ShopAPI.Interfaces.Repository;
+using ShopAPI.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +15,12 @@ builder.Services.AddScoped<ICartService,    ShopAPI.Services.Impl.CartService>()
 builder.Services.AddScoped<IOrderService,   ShopAPI.Services.Impl.OrderService>();
 builder.Services.AddScoped<IStripeWebhookService, ShopAPI.Services.Impl.StripeWebhookService>();
 builder.Services.Configure<PaymentSettings>(builder.Configuration.GetSection("Payment"));
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
+builder.Services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
+builder.Services.AddScoped<IUserRopository, UserRopository>();
+
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -55,7 +59,6 @@ app.Use(async (context, next) =>
     context.Request.EnableBuffering();
     await next();
 });
-
 
 app.UseSwagger();
 app.UseSwaggerUI();
