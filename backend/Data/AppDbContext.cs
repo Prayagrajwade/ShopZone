@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<OrderItem> OrderItems { get; set; }
     public DbSet<OrderStatusLog> OrderStatusLogs { get; set; }
     public DbSet<PaymentLog> PaymentLogs { get; set; }
+    public DbSet<TempleteModel> EmailTemplete { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -124,6 +125,15 @@ public class AppDbContext : DbContext
 
             e.HasIndex(x => x.StripeEventId).IsUnique();
             e.HasIndex(x => x.PaymentIntentId);
+        });
+
+        modelBuilder.Entity<TempleteModel>(e =>
+        {
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Subject).IsRequired().HasMaxLength(500);
+            e.Property(p => p.Body).HasMaxLength(2000);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(p => p.Type).HasMaxLength(100);
         });
 
         // Seed admin user
