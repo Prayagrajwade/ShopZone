@@ -24,3 +24,5 @@ public record ConfirmOrderResponseDto(int OrderId, string Message);
 public record PaymentIntentDto(string ClientSecret, string PaymentIntentId, decimal Amount);
 
 public record UserDto(string Name);
+
+public record TopProductDto(int Id, string Name, decimal Price, int TotalSold);

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Product } from '../models/models';
+import { Product, TopProduct } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
@@ -39,5 +39,9 @@ export class ProductService {
 
   delete(id: number) {
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  getTopProducts() {
+    return this.http.get<TopProduct[]>(`${this.apiUrl}/top-products`);
   }
 }

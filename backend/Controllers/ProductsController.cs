@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShopAPI.DTOs;
-using ShopAPI.Interfaces;
 
 namespace ShopAPI.Controllers;
 
@@ -10,6 +8,7 @@ namespace ShopAPI.Controllers;
 public class ProductsController : ControllerBase
 {
     private readonly IProductService _productService;
+
 
     public ProductsController(IProductService productService) => _productService = productService;
 
@@ -64,5 +63,17 @@ public class ProductsController : ControllerBase
     {
         var deleted = await _productService.DeleteAsync(id);
         return deleted ? Ok(new { message = "Product deleted." }) : NotFound();
+    }
+
+    [Authorize]
+    [HttpGet("top-products")]
+    public async Task<IActionResult> GetTopProducts()
+    {
+        var products = await _productService.GetTopSellingProducts();
+
+        if (products.Count < 5)
+            return NoContent();
+
+        return Ok(products);
     }
 }

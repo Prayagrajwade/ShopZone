@@ -1,10 +1,16 @@
+using ShopAPI.Interfaces.Repository;
+
 namespace ShopAPI.Services.Impl;
 
 public class ProductService : IProductService
 {
     private readonly AppDbContext _db;
+    private readonly IProductsRepository _productsRepository;
 
-    public ProductService(AppDbContext db) => _db = db;
+    public ProductService(AppDbContext db, IProductsRepository productsRepository){
+        _db = db;
+        _productsRepository = productsRepository;
+    } 
 
     public async Task<IEnumerable<ProductDto>> GetAllAsync(string? category, string? search)
     {
@@ -80,6 +86,11 @@ public class ProductService : IProductService
 
         await _db.SaveChangesAsync();
         return MapToDto(product);
+    }
+
+    public async Task<List<TopProductDto>> GetTopSellingProducts()
+    {
+        return await _productsRepository.GetTopSellingProductAsync();
     }
 
     public async Task<bool> DeleteAsync(int id)

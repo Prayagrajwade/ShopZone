@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, switchMap, startWith, combineLatest } from 'rxjs';
 import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Product } from '../../../core/models/models';
+import { Product, TopProduct } from '../../../core/models/models';
 
 @Component({
   selector: 'app-product-list',
@@ -18,6 +18,7 @@ import { Product } from '../../../core/models/models';
 export class ProductListComponent implements OnInit {
   products: Product[] = [];
   categories: string[] = [];
+  topProducts: TopProduct[] = [];
   selectedCategory = '';
   loading = false;
   addingToCart: { [key: number]: boolean } = {};
@@ -26,6 +27,7 @@ export class ProductListComponent implements OnInit {
   searchControl = new FormControl('');
 
   constructor(
+    private router: Router,
     public productService: ProductService,
     public cartService: CartService,
     public auth: AuthService
@@ -33,12 +35,24 @@ export class ProductListComponent implements OnInit {
 
   ngOnInit() {
     this.loadCategories();
+    this.loadTopProducts();
 
     this.searchControl.valueChanges.pipe(
       startWith(''),
       debounceTime(300),
       distinctUntilChanged()
     ).subscribe(() => this.loadProducts());
+  }
+
+  loadTopProducts() {
+    this.productService.getTopProducts().subscribe({
+      next: (res) => {
+        this.topProducts = res;
+      },
+      error: () => {
+        this.topProducts = [];
+      }
+    });
   }
 
   loadCategories() {
@@ -57,6 +71,10 @@ export class ProductListComponent implements OnInit {
   selectCategory(cat: string) {
     this.selectedCategory = cat;
     this.loadProducts();
+  }
+  
+  openProduct(id: number) {
+    this.router.navigate(['/products', id]);
   }
 
   addToCart(product: Product) {

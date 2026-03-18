@@ -53,3 +53,10 @@ export interface PaymentIntent {
   paymentIntentId: string;
   amount: number;
 }
+
+export interface TopProduct {
+  id: number;
+  name: string;
+  price: number;
+  totalSold: number;
+}

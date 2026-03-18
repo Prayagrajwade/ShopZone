@@ -61,10 +61,25 @@ namespace ShopAPI.Services.Impl
                 return;
             }
 
-            var order = _db.Orders
-                .FirstOrDefault(o => o.StripePaymentIntentId == intent.Id);
+            var order = await _db.Orders
+                        .Include(o => o.Items)
+                        .FirstOrDefaultAsync(o => o.StripePaymentIntentId == intent.Id);
 
             if (order is null) return;
+
+            foreach (var item in order.Items)
+            {
+                var product = await _db.Products.FindAsync(item.ProductId);
+
+                if (product == null) continue;
+
+                if (product.Stock < item.Quantity)
+                {
+                    throw new Exception($"Not enough stock for product {product.Name}");
+                }
+
+                product.Stock -= item.Quantity;
+            }
 
             var oldStatus = order.Status;
             order.Status = AppConstants.OrderStatus.OnTheWay;

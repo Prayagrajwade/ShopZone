@@ -10,12 +10,26 @@
       <input type="text" [formControl]="searchControl" placeholder="Search products..." />
     </div>
 
-    <div class="categories">
-      <button class="cat-btn" [class.active]="selectedCategory === ''" (click)="selectCategory('')">All</button>
-      <button class="cat-btn" *ngFor="let cat of categories"
-        [class.active]="selectedCategory === cat" (click)="selectCategory(cat)">
-        {{ cat }}
-      </button>
+    <div>
+      <h2 class="mb-2">Best Sellings</h2>
+      <div class="categories" *ngIf="topProducts != null && topProducts.length >= 5">
+        <button class="cat-btn top-product-btn"
+          *ngFor="let p of topProducts"
+          (click)="openProduct(p.id)">
+          🔥 {{ p.name }}
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="mb-2">Categories</h2>
+      <div class="categories">
+        <button class="cat-btn" [class.active]="selectedCategory === ''" (click)="selectCategory('')">All</button>
+        <button class="cat-btn" *ngFor="let cat of categories"
+          [class.active]="selectedCategory === cat" (click)="selectCategory(cat)">
+          {{ cat }}
+        </button>
+      </div>
     </div>
   </div>
 

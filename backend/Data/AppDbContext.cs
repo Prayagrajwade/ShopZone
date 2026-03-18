@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<OrderStatusLog> OrderStatusLogs { get; set; }
     public DbSet<PaymentLog> PaymentLogs { get; set; }
     public DbSet<TempleteModel> EmailTemplete { get; set; }
+    public DbSet<TopProductDto> TopProducts => Set<TopProductDto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -135,6 +136,8 @@ public class AppDbContext : DbContext
             e.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             e.Property(p => p.Type).HasMaxLength(100);
         });
+
+        modelBuilder.Entity<TopProductDto>().HasNoKey();
 
         // Seed admin user
         modelBuilder.Entity<User>().HasData(new User

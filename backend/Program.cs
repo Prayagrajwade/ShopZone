@@ -19,6 +19,7 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Emai
 
 builder.Services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
 builder.Services.AddScoped<IUserRopository, UserRopository>();
+builder.Services.AddScoped<IProductsRepository, ProductsRepository>();
 
 builder.Services.AddScoped<IEmailService, EmailService>();
 
