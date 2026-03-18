@@ -31,6 +31,7 @@ export interface CartItem {
   quantity: number;
   imageUrl: string;
   subtotal: number;
+  stock: number;
 }
 
 export interface Order {

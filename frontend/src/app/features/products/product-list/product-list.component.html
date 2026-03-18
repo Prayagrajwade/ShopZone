@@ -55,14 +55,14 @@
         </div>
         <div class="card-actions">
           <a [routerLink]="['/products', product.id]" class="btn btn-outline">View Details</a>
-          <button class="btn btn-primary"
+          <!-- <button class="btn btn-primary"
             *ngIf="auth.isLoggedIn && !auth.isAdmin"
             [disabled]="product.stock === 0 || addingToCart[product.id]"
             (click)="addToCart(product)">
             <span *ngIf="successMsg[product.id]">✓ Added!</span>
             <span *ngIf="!successMsg[product.id] && !addingToCart[product.id]">Add to Cart</span>
             <span *ngIf="addingToCart[product.id]">Adding...</span>
-          </button>
+          </button> -->
           <a routerLink="/login" class="btn btn-primary" *ngIf="!auth.isLoggedIn">Login to Buy</a>
         </div>
       </div>

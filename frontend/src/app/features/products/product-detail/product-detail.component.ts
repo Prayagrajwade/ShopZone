@@ -20,6 +20,7 @@ export class ProductDetailComponent implements OnInit {
   quantity = 1;
   adding = false;
   added = false;
+  errorMsg: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -49,7 +50,10 @@ export class ProductDetailComponent implements OnInit {
         this.added = true;
         setTimeout(() => this.added = false, 2500);
       },
-      error: () => { this.adding = false; }
+      error: (err) => { 
+        this.errorMsg = err?.error?.message || 'Something went wrong';
+        this.adding = false;
+       }
     });
   }
 }

@@ -18,27 +18,42 @@ public class CartService : ICartService
                 c.Product.Price,
                 c.Quantity,
                 c.Product.ImageUrl,
-                c.Product.Price * c.Quantity))
+                c.Product.Price * c.Quantity,
+                c.Product.Stock))
             .ToListAsync();
     }
 
     public async Task<bool> AddToCartAsync(int userId, AddToCartDto dto)
     {
         var product = await _db.Products.FindAsync(dto.ProductId);
-        if (product is null || !product.IsActive) return false;
+
+        if (product is null || !product.IsActive)
+            return false;
 
         var existing = await _db.CartItems
             .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == dto.ProductId);
 
+        var totalRequestedQty = dto.Quantity;
+
         if (existing is not null)
+            totalRequestedQty += existing.Quantity;
+
+        if (totalRequestedQty > product.Stock)
+            throw new BadRequestException($"Only {product.Stock} items available in stock.");
+
+        if (existing is not null)
+        {
             existing.Quantity += dto.Quantity;
+        }
         else
+        {
             _db.CartItems.Add(new CartItem
             {
-                UserId    = userId,
+                UserId = userId,
                 ProductId = dto.ProductId,
-                Quantity  = dto.Quantity
+                Quantity = dto.Quantity
             });
+        }
 
         await _db.SaveChangesAsync();
         return true;

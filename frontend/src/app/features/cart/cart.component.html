@@ -23,7 +23,7 @@
         <div class="qty-control">
           <button (click)="updateQty(item, item.quantity - 1)" [disabled]="item.quantity <= 1">−</button>
           <span>{{ item.quantity }}</span>
-          <button (click)="updateQty(item, item.quantity + 1)">+</button>
+          <button (click)="updateQty(item, item.quantity + 1)" [disabled]="item.quantity == item.stock">+</button>
         </div>
         <div class="item-subtotal">${{ item.subtotal | number:'1.2-2' }}</div>
         <button class="remove-btn" (click)="remove(item)">🗑</button>

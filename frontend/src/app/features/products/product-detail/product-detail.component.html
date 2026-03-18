@@ -39,6 +39,9 @@
             <span *ngIf="!added && !adding">🛒 Add to Cart — ${{ (product.price * quantity) | number:'1.2-2' }}</span>
             <span *ngIf="adding">Adding...</span>
           </button>
+          <div class="error-msg" *ngIf="errorMsg">
+            {{ errorMsg }}
+          </div>
 
           <a routerLink="/cart" class="view-cart-link" *ngIf="added">View Cart →</a>
         </ng-container>

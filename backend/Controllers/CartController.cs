@@ -28,15 +28,32 @@ public class CartController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddToCart(AddToCartDto dto)
     {
-        var success = await _cartService.AddToCartAsync(UserId, dto);
-        return success ? Ok(new { message = "Added to cart." }) : BadRequest(new { message = "Product not found or inactive." });
+        try
+        {
+            var success = await _cartService.AddToCartAsync(UserId, dto);
+
+            return success
+                ? Ok(new { message = "Added to cart." })
+                : BadRequest(new { message = "Product not found or inactive." });
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateQuantity(int id, [FromBody] int quantity)
     {
-        var success = await _cartService.UpdateQuantityAsync(UserId, id, quantity);
-        return success ? Ok(new { message = "Cart updated." }) : NotFound();
+        try
+        {
+            var success = await _cartService.UpdateQuantityAsync(UserId, id, quantity);
+            return success ? Ok(new { message = "Cart updated." }) : NotFound();
+        }catch(Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        
     }
 
     [HttpDelete("{id:int}")]

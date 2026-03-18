@@ -12,7 +12,7 @@ public record UpdateProductDto(string Name, string Description, decimal Price, i
 
 // Cart
 public record AddToCartDto(int ProductId, int Quantity);
-public record CartItemDto(int Id, int ProductId, string ProductName, decimal Price, int Quantity, string ImageUrl, decimal Subtotal);
+public record CartItemDto(int Id, int ProductId, string ProductName, decimal Price, int Quantity, string ImageUrl, decimal Subtotal, int Stock);
 
 // Order
 public record OrderDto(int Id, string Status, decimal TotalAmount, DateTime CreatedAt, List<OrderItemDto> Items);
