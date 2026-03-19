@@ -42,8 +42,13 @@
           <div class="error-msg" *ngIf="errorMsg">
             {{ errorMsg }}
           </div>
+          <button class="add-btn"
+            (click)="buyNow()"
+            [disabled]="product.stock === 0 || adding">
+              Buy Now
+          </button>
 
-          <a routerLink="/cart" class="view-cart-link" *ngIf="added">View Cart →</a>
+          <!-- <a routerLink="/cart" class="view-cart-link" *ngIf="added">View Cart →</a> -->
         </ng-container>
 
         <a routerLink="/login" class="add-btn login-prompt" *ngIf="!auth.isLoggedIn">

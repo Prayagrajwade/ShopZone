@@ -26,3 +26,5 @@ public record PaymentIntentDto(string ClientSecret, string PaymentIntentId, deci
 public record UserDto(string Name);
 
 public record TopProductDto(int Id, string Name, decimal Price, int TotalSold);
+
+public record BuyNowDto(int ProductId, int Quantity);

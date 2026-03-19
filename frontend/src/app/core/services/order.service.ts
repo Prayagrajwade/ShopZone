@@ -30,4 +30,11 @@ export class OrderService {
   getAllOrdersAdmin() {
     return this.http.get<any[]>(`${this.apiUrl}/admin/all`);
   }
+
+  createBuyNowPaymentIntent(data: { productId: number, quantity: number }) {
+    return this.http.post<PaymentIntent>(
+      `${environment.apiUrl}/orders/buy-now`,
+      data
+    );
+  }
 }

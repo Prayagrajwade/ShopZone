@@ -63,7 +63,7 @@ public class EmailService : IEmailService
                 );
             }
 
-            await smtp.SendMailAsync(message);
+           await smtp.SendMailAsync(message);
         }
         catch(Exception ex)
         {

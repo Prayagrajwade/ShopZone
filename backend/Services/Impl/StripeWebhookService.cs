@@ -65,7 +65,20 @@ namespace ShopAPI.Services.Impl
                         .Include(o => o.Items)
                         .FirstOrDefaultAsync(o => o.StripePaymentIntentId == intent.Id);
 
-            if (order is null) return;
+            if (order is null)
+            {
+                await Task.Delay(5000);
+
+                order = await _db.Orders
+                    .Include(o => o.Items)
+                    .FirstOrDefaultAsync(o => o.StripePaymentIntentId == intent.Id);
+
+                if (order is null)
+                {
+                    Console.WriteLine("Order still not found after retry");
+                    return;
+                }
+            }
 
             foreach (var item in order.Items)
             {

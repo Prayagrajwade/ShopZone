@@ -39,7 +39,7 @@ public class CartService : ICartService
             totalRequestedQty += existing.Quantity;
 
         if (totalRequestedQty > product.Stock)
-            throw new BadRequestException($"Only {product.Stock} items available in stock.");
+            throw new BadRequestException($"Only {product.Stock} items available in stock. Only {product.Stock} available.");
 
         if (existing is not null)
         {

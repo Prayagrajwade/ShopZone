@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShopAPI.Interfaces;
 
 namespace ShopAPI.Controllers;
 
@@ -65,5 +64,23 @@ public class OrdersController : ControllerBase
     {
         var orders = await _orderService.GetAllOrdersAdminAsync();
         return Ok(orders);
+    }
+
+    [HttpPost("buy-now")]
+    public async Task<IActionResult> BuyNow([FromBody] BuyNowDto dto)
+    {
+        try
+        {
+            var result = await _orderService.CreateBuyNowPaymentIntentAsync(UserId, dto);
+            return Ok(result);
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { message = "Something went wrong." });
+        }
     }
 }

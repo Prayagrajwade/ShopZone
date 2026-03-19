@@ -31,17 +31,60 @@ export class CheckoutComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.cartService.cartItems$.subscribe(items => this.cartItems = items);
-    this.cartService.loadCart().subscribe({
-      next: () => {
-        this.loading = false;
-        this.initStripe();
-      },
-      error: () => { this.loading = false; this.error = 'Failed to load cart.'; }
-    });
+  const state = history.state;
+  if (state?.buyNow) {
+    this.paymentIntentId = state.paymentIntent.paymentIntentId;
+
+    this.initStripeWithClientSecret(state.paymentIntent.clientSecret);
+
+    this.cartItems = [
+    {
+      id: 0, 
+      productId: state.product.id,
+      productName: state.product.name,
+      price: state.product.price,
+      quantity: state.quantity,
+      imageUrl: state.product.imageUrl,
+      subtotal: state.product.price * state.quantity,
+      stock: state.product.stock
+    }
+  ];
+
+    this.loading = false;
+    return;
   }
 
+  this.cartService.cartItems$.subscribe(items => this.cartItems = items);
 
+  this.cartService.loadCart().subscribe({
+    next: () => {
+      this.loading = false;
+      this.initStripe();
+    },
+    error: () => {
+      this.loading = false;
+      this.error = 'Failed to load cart.';
+    }
+  });
+}
+
+  async initStripeWithClientSecret(clientSecret: string) {
+    this.stripe = await loadStripe(environment.stripePublishableKey);
+
+    if (!this.stripe) {
+      this.error = 'Failed to load Stripe.';
+      return;
+    }
+
+    this.elements = this.stripe.elements({
+      clientSecret: clientSecret,
+      appearance: { theme: 'stripe' }
+    });
+
+    const paymentElement = this.elements.create('payment');
+    paymentElement.mount('#payment-element');
+  }
+  
   async initStripe() {
     this.stripe = await loadStripe(environment.stripePublishableKey);
     if (!this.stripe) { this.error = 'Failed to load Stripe.'; this.loading = false; return; }

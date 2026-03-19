@@ -9,4 +9,5 @@ public interface IOrderService
     Task<IEnumerable<OrderDto>> GetOrdersByUserAsync(int userId);
     Task<OrderDto?> GetOrderByIdAsync(int userId, int orderId);
     Task<IEnumerable<AdminOrderDto>> GetAllOrdersAdminAsync();
+    Task<PaymentIntentDto> CreateBuyNowPaymentIntentAsync(int userId, BuyNowDto dto);
 }

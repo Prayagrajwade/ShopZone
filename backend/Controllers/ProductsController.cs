@@ -65,7 +65,6 @@ public class ProductsController : ControllerBase
         return deleted ? Ok(new { message = "Product deleted." }) : NotFound();
     }
 
-    [Authorize]
     [HttpGet("top-products")]
     public async Task<IActionResult> GetTopProducts()
     {

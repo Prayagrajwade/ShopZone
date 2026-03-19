@@ -27,12 +27,12 @@ public class OrderService : IOrderService
         if (!cartItems.Any())
             throw new InvalidOperationException("Cart is empty.");
 
-        var total        = cartItems.Sum(c => c.Product!.Price * c.Quantity);
-        var amountCents  = (long)(total * 100);
+        var total = cartItems.Sum(c => c.Product!.Price * c.Quantity);
+        var amountCents = (long)(total * 100);
 
         var options = new PaymentIntentCreateOptions
         {
-            Amount   = amountCents,
+            Amount = amountCents,
             Currency = _paymentSettings.Currency,
             AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
             {
@@ -41,7 +41,7 @@ public class OrderService : IOrderService
         };
 
         var service = new PaymentIntentService();
-        var intent  = await service.CreateAsync(options);
+        var intent = await service.CreateAsync(options);
 
         _db.PaymentLogs.Add(new PaymentLog
         {
@@ -56,39 +56,107 @@ public class OrderService : IOrderService
         return new PaymentIntentDto(intent.ClientSecret, intent.Id, total);
     }
 
+    public async Task<PaymentIntentDto> CreateBuyNowPaymentIntentAsync(int userId, BuyNowDto dto)
+    {
+        var product = await _db.Products.FindAsync(dto.ProductId);
+
+        if (product == null || !product.IsActive)
+            throw new Exception("Product not available");
+
+        if (dto.Quantity > product.Stock)
+            throw new Exception($"Only {product.Stock} available");
+
+        var total = product.Price * dto.Quantity;
+        var amountCents = (long)(total * 100);
+
+        var options = new PaymentIntentCreateOptions
+        {
+            Amount = amountCents,
+            Currency = _paymentSettings.Currency,
+            AutomaticPaymentMethods = new() { Enabled = true },
+
+            Metadata = new Dictionary<string, string>
+            {
+                ["type"] = "buynow",
+                ["productId"] = dto.ProductId.ToString(),
+                ["quantity"] = dto.Quantity.ToString(),
+                ["userId"] = userId.ToString()
+            }
+        };
+
+        var service = new PaymentIntentService();
+        var intent = await service.CreateAsync(options);
+
+        return new PaymentIntentDto(intent.ClientSecret, intent.Id, total);
+    }
+
     public async Task<ConfirmOrderResponseDto> ConfirmOrderAsync(int userId, string paymentIntentId)
     {
+        StripeConfiguration.ApiKey = _config["Stripe:SecretKey"];
+
+        var service = new PaymentIntentService();
+        var intent = await service.GetAsync(paymentIntentId);
+
+        Console.WriteLine("Metadata: " + System.Text.Json.JsonSerializer.Serialize(intent.Metadata));
+
+        if (intent.Metadata != null &&
+            intent.Metadata.TryGetValue("type", out var type) &&
+            type == "buynow")
+        {
+            if (intent.Status != AppConstants.PaymentStatus.Succeeded)
+                throw new BadRequestException("Payment not completed.");
+
+            var productId = int.Parse(intent.Metadata["productId"]);
+            var quantity = int.Parse(intent.Metadata["quantity"]);
+
+            var product = await _db.Products.FindAsync(productId);
+
+            if (product == null)
+                throw new BadRequestException("Product not found");
+
+            if (product.Stock < quantity)
+                throw new BadRequestException($"Only {product.Stock} available");
+
+            product.Stock -= quantity;
+
+            var order = new Order
+            {
+                UserId = userId,
+                Status = AppConstants.OrderStatus.Paid,
+                TotalAmount = product.Price * quantity,
+                StripePaymentIntentId = paymentIntentId,
+                Items = new List<OrderItem>
+            {
+                new OrderItem
+                {
+                    ProductId = productId,
+                    Quantity = quantity,
+                    UnitPrice = product.Price
+                }
+            }
+            };
+
+            _db.Orders.Add(order);
+
+            await _db.SaveChangesAsync();
+
+            return new ConfirmOrderResponseDto(order.Id, "Order placed successfully.");
+        }
+
         var cartItems = await _db.CartItems
             .Include(c => c.Product)
             .Where(c => c.UserId == userId)
             .ToListAsync();
 
         if (!cartItems.Any())
-            throw new InvalidOperationException("Cart is empty.");
-
-        StripeConfiguration.ApiKey = _config["Stripe:SecretKey"];
-        var service = new PaymentIntentService();
-        var intent = await service.GetAsync(paymentIntentId);
+            throw new BadRequestException("Cart is empty.");
 
         if (intent.Status != AppConstants.PaymentStatus.Succeeded)
-        {
-            _db.PaymentLogs.Add(new PaymentLog
-            {
-                StripeEventId = Guid.NewGuid().ToString(),
-                EventType = AppConstants.PaymentEvents.FailedManualCheck,
-                PaymentIntentId = intent.Id,
-                Status = intent.Status,
-                RawJson = System.Text.Json.JsonSerializer.Serialize(intent)
-            });
-
-            await _db.SaveChangesAsync();
-
-            throw new InvalidOperationException("Payment not completed.");
-        }
+            throw new BadRequestException("Payment not completed.");
 
         var total = cartItems.Sum(c => c.Product!.Price * c.Quantity);
 
-        var order = new Order
+        var cartOrder = new Order
         {
             UserId = userId,
             Status = AppConstants.OrderStatus.Paid,
@@ -102,21 +170,13 @@ public class OrderService : IOrderService
             }).ToList()
         };
 
-        _db.Orders.Add(order);
-        await _db.SaveChangesAsync();
-        _db.PaymentLogs.Add(new PaymentLog
-        {
-            StripeEventId = Guid.NewGuid().ToString(),
-            EventType = AppConstants.PaymentEvents.Checked,
-            PaymentIntentId = intent.Id,
-            Status = intent.Status,
-            RawJson = System.Text.Json.JsonSerializer.Serialize(intent),
-            OrderId = order.Id
-        });
+        _db.Orders.Add(cartOrder);
+
         _db.CartItems.RemoveRange(cartItems);
+
         await _db.SaveChangesAsync();
 
-        return new ConfirmOrderResponseDto(order.Id, "Order placed successfully.");
+        return new ConfirmOrderResponseDto(cartOrder.Id, "Order placed successfully.");
     }
 
     public async Task<IEnumerable<OrderDto>> GetOrdersByUserAsync(int userId)
