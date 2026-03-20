@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Cors;
+using ShopAPI.Application.Interfaces.Service;
 using Microsoft.AspNetCore.Mvc;
-using ShopAPI.Data;
-using ShopAPI.Interfaces;
-using ShopAPI.Models;
+using Microsoft.Extensions.Configuration;
 using Stripe;
 
 namespace ShopAPI.Controllers;
@@ -12,15 +11,13 @@ namespace ShopAPI.Controllers;
 [DisableCors]
 public class WebhookController : ControllerBase
 {
-    private readonly AppDbContext _db;
     private readonly IConfiguration _config;
-    private readonly IStripeWebhookService _stripeWebhookService;
+    private readonly IStripeWebhookManager _stripeWebhookManager;
 
-    public WebhookController(AppDbContext db, IConfiguration config, IStripeWebhookService stripeWebhookService)
+    public WebhookController(IConfiguration config, IStripeWebhookManager stripeWebhookManager)
     {
-        _db = db;
         _config = config;
-        _stripeWebhookService = stripeWebhookService;
+        _stripeWebhookManager = stripeWebhookManager;
     }
 
     [HttpPost]
@@ -30,7 +27,7 @@ public class WebhookController : ControllerBase
 
         try
         {
-            await _stripeWebhookService.HandleEventAsync(json, Request.Headers["Stripe-Signature"]);
+            await _stripeWebhookManager.HandleEventAsync(json, Request.Headers["Stripe-Signature"]);
             return Ok();
         }
         catch (StripeException ex)

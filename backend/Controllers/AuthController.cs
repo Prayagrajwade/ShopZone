@@ -1,6 +1,6 @@
+using ShopAPI.Application.DTOs;
+using ShopAPI.Application.Interfaces.Service;
 using Microsoft.AspNetCore.Mvc;
-using ShopAPI.DTOs;
-using ShopAPI.Interfaces;
 
 namespace ShopAPI.Controllers;
 
@@ -8,16 +8,16 @@ namespace ShopAPI.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly IAuthManager _authManager;
 
-    public AuthController(IAuthService authService) => _authService = authService;
+    public AuthController(IAuthManager authManager) => _authManager = authManager;
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterDto dto)
     {
         try
         {
-            var result = await _authService.RegisterAsync(dto);
+            var result = await _authManager.RegisterAsync(dto);
             return Ok(result);
         }
         catch (InvalidOperationException ex)
@@ -31,7 +31,7 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var result = await _authService.LoginAsync(dto);
+            var result = await _authManager.LoginAsync(dto);
             return Ok(result);
         }
         catch (UnauthorizedAccessException ex)

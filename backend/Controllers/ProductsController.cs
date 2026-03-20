@@ -1,4 +1,5 @@
-using Microsoft.AspNetCore.Authorization;
+using ShopAPI.Application.DTOs;
+using ShopAPI.Application.Interfaces.Service;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ShopAPI.Controllers;
@@ -7,24 +8,24 @@ namespace ShopAPI.Controllers;
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase
 {
-    private readonly IProductService _productService;
+    private readonly IProductManager _productManager;
 
 
-    public ProductsController(IProductService productService) => _productService = productService;
+    public ProductsController(IProductManager productManager) => _productManager = productManager;
 
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? category, [FromQuery] string? search)
     {
         try
         {
-            var products = await _productService.GetAllAsync(category, search);
+            var products = await _productManager.GetAllAsync(category, search);
             return Ok(products);
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
-        
+
     }
 
     [HttpGet("{id:int}")]
@@ -32,14 +33,14 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var product = await _productService.GetByIdAsync(id);
+            var product = await _productManager.GetByIdAsync(id);
             return product is null ? NotFound() : Ok(product);
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
-        
+
     }
 
     [HttpGet("categories")]
@@ -47,14 +48,14 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var categories = await _productService.GetCategoriesAsync();
+            var categories = await _productManager.GetCategoriesAsync();
             return Ok(categories);
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
-        
+
     }
 
     [Authorize(Roles = "admin")]
@@ -63,14 +64,14 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var products = await _productService.GetAllAdminAsync();
+            var products = await _productManager.GetAllAdminAsync();
             return Ok(products);
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
-        
+
     }
 
     [Authorize(Roles = "admin")]
@@ -79,14 +80,14 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var created = await _productService.CreateAsync(dto);
+            var created = await _productManager.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
-        
+
     }
 
     [Authorize(Roles = "admin")]
@@ -95,14 +96,14 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var updated = await _productService.UpdateAsync(id, dto);
+            var updated = await _productManager.UpdateAsync(id, dto);
             return updated is null ? NotFound() : Ok(updated);
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
-        
+
     }
 
     [Authorize(Roles = "admin")]
@@ -111,7 +112,7 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var deleted = await _productService.DeleteAsync(id);
+            var deleted = await _productManager.DeleteAsync(id);
             return deleted ? Ok(new { message = "Product deleted." }) : NotFound();
         }
         catch (Exception ex)
@@ -125,7 +126,7 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var products = await _productService.GetTopSellingProducts();
+            var products = await _productManager.GetTopSellingProducts();
 
             if (products.Count < 5)
                 return NoContent();
@@ -147,7 +148,7 @@ public class ProductsController : ControllerBase
             if (ids == null || !ids.Any())
                 return BadRequest(new { message = "Product IDs are required." });
 
-            var products = await _productService.GetByIdsAsync(ids);
+            var products = await _productManager.GetByIdsAsync(ids);
 
             return Ok(products);
         }
@@ -155,6 +156,6 @@ public class ProductsController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
-        
+
     }
 }

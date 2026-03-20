@@ -1,6 +1,9 @@
-using System.Security.Claims;
+using ShopAPI.Application.DTOs;
+using ShopAPI.Application.Interfaces.Service;
+using ShopAPI.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ShopAPI.Controllers;
 
@@ -9,9 +12,9 @@ namespace ShopAPI.Controllers;
 [Authorize]
 public class CartController : ControllerBase
 {
-    private readonly ICartService _cartService;
+    private readonly ICartManager _cartManager;
 
-    public CartController(ICartService cartService) => _cartService = cartService;
+    public CartController(ICartManager cartManager) => _cartManager = cartManager;
 
     private int UserId =>
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -19,7 +22,7 @@ public class CartController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetCart()
     {
-        var items = await _cartService.GetCartAsync(UserId);
+        var items = await _cartManager.GetCartAsync(UserId);
         return Ok(items);
     }
 
@@ -28,7 +31,7 @@ public class CartController : ControllerBase
     {
         try
         {
-            var success = await _cartService.AddToCartAsync(UserId, dto);
+            var success = await _cartManager.AddToCartAsync(UserId, dto);
 
             return success
                 ? Ok(new { message = "Added to cart." })
@@ -45,33 +48,33 @@ public class CartController : ControllerBase
     {
         try
         {
-            var success = await _cartService.UpdateQuantityAsync(UserId, id, quantity);
+            var success = await _cartManager.UpdateQuantityAsync(UserId, id, quantity);
             return success ? Ok(new { message = "Cart updated." }) : NotFound();
         }catch(Exception ex)
         {
             return BadRequest(new { message = ex.Message });
         }
-        
+
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> RemoveFromCart(int id)
     {
-        var success = await _cartService.RemoveItemAsync(UserId, id);
+        var success = await _cartManager.RemoveItemAsync(UserId, id);
         return success ? Ok(new { message = "Item removed." }) : NotFound();
     }
 
     [HttpDelete]
     public async Task<IActionResult> ClearCart()
     {
-        await _cartService.ClearCartAsync(UserId);
+        await _cartManager.ClearCartAsync(UserId);
         return Ok(new { message = "Cart cleared." });
     }
 
     [HttpPost("merge")]
     public async Task<IActionResult> MergeCart(List<AddToCartDto> items)
     {
-        await _cartService.MergeCartAsync(UserId, items);
+        await _cartManager.MergeCartAsync(UserId, items);
         return Ok();
     }
 }

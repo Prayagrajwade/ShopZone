@@ -1,5 +1,16 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using ShopAPI.Application.Interfaces.Service;
+using ShopAPI.Application.Services.Impl;
+using ShopAPI.Common;
+using ShopAPI.Common.Email;
+using ShopAPI.Infrastructure.Persistence.Data;
+using ShopAPI.Infrastructure.Repository;
+using ShopAPI.Interfaces.Email;
 using ShopAPI.Interfaces.Repository;
-using ShopAPI.Repository;
+using ShopAPI.Services;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,17 +20,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<JwtService>();
-builder.Services.AddScoped<IAuthService,    ShopAPI.Services.Impl.AuthService>();
-builder.Services.AddScoped<IProductService, ShopAPI.Services.Impl.ProductService>();
-builder.Services.AddScoped<ICartService,    ShopAPI.Services.Impl.CartService>();
-builder.Services.AddScoped<IOrderService,   ShopAPI.Services.Impl.OrderService>();
-builder.Services.AddScoped<IStripeWebhookService, ShopAPI.Services.Impl.StripeWebhookService>();
+builder.Services.AddScoped<IAuthManager, AuthManager>();
+builder.Services.AddScoped<IProductManager, ProductManager>();
+builder.Services.AddScoped<ICartManager, CartManager>();
+builder.Services.AddScoped<IOrderManager, OrderManager>();
+builder.Services.AddScoped<IStripeWebhookManager, StripeWebhookManager>();
 builder.Services.Configure<PaymentSettings>(builder.Configuration.GetSection("Payment"));
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
 builder.Services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
 builder.Services.AddScoped<IUserRopository, UserRopository>();
 builder.Services.AddScoped<IProductsRepository, ProductsRepository>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 builder.Services.AddScoped<IEmailService, EmailService>();
 
