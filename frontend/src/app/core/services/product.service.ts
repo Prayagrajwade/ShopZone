@@ -44,4 +44,8 @@ export class ProductService {
   getTopProducts() {
     return this.http.get<TopProduct[]>(`${this.apiUrl}/top-products`);
   }
+
+  getByIds(ids: number[]) {
+    return this.http.post<Product[]>(`${this.apiUrl}/by-ids`, ids);
+  }
 }

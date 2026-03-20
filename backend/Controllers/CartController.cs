@@ -1,8 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShopAPI.DTOs;
-using ShopAPI.Interfaces;
 
 namespace ShopAPI.Controllers;
 
@@ -68,5 +66,12 @@ public class CartController : ControllerBase
     {
         await _cartService.ClearCartAsync(UserId);
         return Ok(new { message = "Cart cleared." });
+    }
+
+    [HttpPost("merge")]
+    public async Task<IActionResult> MergeCart(List<AddToCartDto> items)
+    {
+        await _cartService.MergeCartAsync(UserId, items);
+        return Ok();
     }
 }

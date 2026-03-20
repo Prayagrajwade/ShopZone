@@ -31,13 +31,26 @@ export class LoginComponent {
 
   submit() {
     if (this.form.invalid) return;
+
     this.loading = true;
     this.error = '';
 
     const { email, password } = this.form.value;
+
     this.auth.login(email, password).subscribe({
       next: (res) => {
-        this.cart.loadCart().subscribe();
+
+        const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+        if (localCart.length > 0) {
+          this.cart.mergeCart(localCart).subscribe(() => {
+            localStorage.removeItem('cart');
+            this.cart.loadCart().subscribe();
+          });
+        } else {
+          this.cart.loadCart().subscribe();
+        }
+
         this.router.navigate([res.role === 'admin' ? '/admin' : '/products']);
       },
       error: (err) => {

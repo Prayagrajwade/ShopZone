@@ -9,16 +9,16 @@
   <div class="nav-links">
     <a routerLink="/products" routerLinkActive="active" class="nav-link">Products</a>
 
-    <ng-container *ngIf="auth.isLoggedIn">
+    <ng-container >
       <ng-container *ngIf="auth.isAdmin">
         <a routerLink="/admin" routerLinkActive="active" class="nav-link">Dashboard</a>
         <a routerLink="/admin/products" routerLinkActive="active" class="nav-link">Manage Products</a>
       </ng-container>
 
-      <ng-container *ngIf="!auth.isAdmin">
+      <ng-container >
         <a routerLink="/cart" routerLinkActive="active" class="nav-link cart-link">
           <span>Cart</span>
-          <span class="cart-badge" *ngIf="(cartService.cartItems$ | async)?.length">
+          <span class="cart-badge" *ngIf="cartService.cartCount > 0">
             {{ cartService.cartCount }}
           </span>
         </a>

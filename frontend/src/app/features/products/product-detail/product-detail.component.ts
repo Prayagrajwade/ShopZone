@@ -28,9 +28,9 @@ export class ProductDetailComponent implements OnInit {
     private productService: ProductService,
     public cartService: CartService,
     public auth: AuthService,
-    public orderService : OrderService,
-    public router : Router
-  ) {}
+    public orderService: OrderService,
+    public router: Router
+  ) { }
 
   ngOnInit() {
     this.route.params.pipe(
@@ -46,6 +46,14 @@ export class ProductDetailComponent implements OnInit {
 
   addToCart() {
     if (!this.product) return;
+
+    if (!this.auth.isLoggedIn) {
+      this.cartService.addToLocalCart(this.product.id, this.quantity);
+      this.added = true;
+      setTimeout(() => this.added = false, 2500);
+      return;
+    }
+
     this.adding = true;
     this.cartService.addToCart(this.product.id, this.quantity).subscribe({
       next: () => {
@@ -53,16 +61,33 @@ export class ProductDetailComponent implements OnInit {
         this.added = true;
         setTimeout(() => this.added = false, 2500);
       },
-      error: (err) => { 
+      error: (err) => {
         this.errorMsg = err?.error?.message || 'Something went wrong';
         this.adding = false;
-       }
+      }
     });
+  }
+
+  addToLocalCart(productId: number, quantity: number) {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+    const existing = cart.find((x: any) => x.productId === productId);
+
+    if (existing) {
+      existing.quantity += quantity;
+    } else {
+      cart.push({ productId, quantity });
+    }
+
+    localStorage.setItem('cart', JSON.stringify(cart));
   }
 
   buyNow() {
     if (!this.product) return;
 
+    if(!this.auth.isLoggedIn){
+      this.router.navigate(['/login']);
+    }
     this.adding = true;
     this.errorMsg = '';
 
@@ -75,7 +100,7 @@ export class ProductDetailComponent implements OnInit {
           state: {
             buyNow: true,
             paymentIntent: res,
-            product: this.product,   
+            product: this.product,
             quantity: this.quantity
           }
         });

@@ -16,5 +16,12 @@ namespace ShopAPI.Repository
                         .FromSqlRaw("EXEC GetTopSellingProducts")
                         .ToListAsync();
         }
+
+        public async Task<List<Product>> GetByIdsAsync(List<int> ids)
+        {
+            return await _db.Products
+                .Where(p => ids.Contains(p.Id) && p.IsActive)
+                .ToListAsync();
+        }
     }
 }

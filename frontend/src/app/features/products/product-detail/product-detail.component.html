@@ -23,7 +23,7 @@
           </span>
         </div>
 
-        <ng-container *ngIf="auth.isLoggedIn && !auth.isAdmin">
+        <ng-container *ngIf="!auth.isAdmin">
           <div class="quantity-row">
             <span class="qty-label">Quantity:</span>
             <div class="qty-control">
@@ -51,9 +51,9 @@
           <!-- <a routerLink="/cart" class="view-cart-link" *ngIf="added">View Cart →</a> -->
         </ng-container>
 
-        <a routerLink="/login" class="add-btn login-prompt" *ngIf="!auth.isLoggedIn">
+        <!-- <a routerLink="/login" class="add-btn login-prompt" *ngIf="!auth.isLoggedIn">
           Login to Purchase
-        </a>
+        </a> -->
       </div>
     </div>
   </div>

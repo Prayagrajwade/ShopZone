@@ -1,4 +1,5 @@
 using ShopAPI.Interfaces.Repository;
+using ShopAPI.Repository;
 
 namespace ShopAPI.Services.Impl;
 
@@ -101,6 +102,11 @@ public class ProductService : IProductService
         product.IsActive = false;  
         await _db.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<List<Product>> GetByIdsAsync(List<int> ids)
+    {
+        return await _productsRepository.GetByIdsAsync(ids);
     }
 
     private static ProductDto MapToDto(Product p) =>

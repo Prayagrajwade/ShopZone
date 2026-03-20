@@ -41,7 +41,9 @@
         <span>Total</span>
         <span>${{ total | number:'1.2-2' }}</span>
       </div>
-      <a routerLink="/checkout" class="checkout-btn">Proceed to Checkout →</a>
+      <button class="checkout-btn" (click)="checkout()">
+        Proceed to Checkout →
+      </button>
       <a routerLink="/products" class="continue-link">← Continue Shopping</a>
     </div>
   </div>

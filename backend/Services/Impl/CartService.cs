@@ -93,4 +93,12 @@ public class CartService : ICartService
         _db.CartItems.RemoveRange(items);
         await _db.SaveChangesAsync();
     }
+
+    public async Task MergeCartAsync(int userId, List<AddToCartDto> items)
+    {
+        foreach (var dto in items)
+        {
+            await AddToCartAsync(userId, dto);
+        }
+    }
 }
