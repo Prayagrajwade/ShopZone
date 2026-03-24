@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using ShopAPI.Application.Interfaces.Service;
 using ShopAPI.Application.Services.Impl;
 using ShopAPI.Common;
 using ShopAPI.Common.Email;
@@ -25,6 +24,7 @@ builder.Services.AddScoped<IProductManager, ProductManager>();
 builder.Services.AddScoped<ICartManager, CartManager>();
 builder.Services.AddScoped<IOrderManager, OrderManager>();
 builder.Services.AddScoped<IStripeWebhookManager, StripeWebhookManager>();
+builder.Services.AddScoped<IUserManager, UserManager>();
 builder.Services.Configure<PaymentSettings>(builder.Configuration.GetSection("Payment"));
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 

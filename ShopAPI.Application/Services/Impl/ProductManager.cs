@@ -12,12 +12,12 @@ public class ProductManager : IProductManager
         _productsRepository = productsRepository;
     }
 
-    public async Task<IEnumerable<ProductDto>> GetAllAsync(string? category, string? search)
+    public async Task<IEnumerable<ProductDto>> GetAllProductsAsync(string? category, string? search)
     {
         return await _productsRepository.GetAllAsync(category, search);
     }
 
-    public async Task<ProductDto?> GetByIdAsync(int id)
+    public async Task<ProductDto?> GetProductByIdAsync(int id)
     {
         return await _productsRepository.GetByIdAsync(id);
     }
@@ -27,17 +27,17 @@ public class ProductManager : IProductManager
         return await _productsRepository.GetCategoriesAsync();
     }
 
-    public async Task<IEnumerable<ProductDto>> GetAllAdminAsync()
+    public async Task<IEnumerable<ProductDto>> GetAllProductAdminAsync()
     {
         return await _productsRepository.GetAllAdminAsync();
     }
 
-    public async Task<ProductDto> CreateAsync(CreateProductDto dto)
+    public async Task<ProductDto> CreateProductAsync(CreateProductDto dto)
     {
         return await _productsRepository.CreateAsync(dto);
     }
 
-    public async Task<ProductDto?> UpdateAsync(int id, UpdateProductDto dto)
+    public async Task<ProductDto?> UpdateProductAsync(int id, UpdateProductDto dto)
     {
         return await _productsRepository.UpdateAsync(id, dto);
     }
@@ -47,12 +47,12 @@ public class ProductManager : IProductManager
         return await _productsRepository.GetTopSellingProductAsync();
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteProductAsync(int id)
     {
         return await _productsRepository.DeleteAsync(id);
     }
 
-    public async Task<List<ProductEntity>> GetByIdsAsync(List<int> ids)
+    public async Task<List<ProductEntity>> GetProductByIdsAsync(List<int> ids)
     {
         return await _productsRepository.GetByIdsAsync(ids);
     }

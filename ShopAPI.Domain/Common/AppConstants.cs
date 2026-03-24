@@ -1,6 +1,4 @@
-﻿using System.Net.NetworkInformation;
-
-namespace ShopAPI.Common
+﻿namespace ShopAPI.Common
 {
     public static class AppConstants
     {

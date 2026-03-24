@@ -1,5 +1,3 @@
-using ShopAPI.Interfaces.Repository;
-
 namespace ShopAPI.Infrastructure.Repository;
 
 public class OrderRepository : IOrderRepository

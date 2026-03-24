@@ -1,9 +1,5 @@
 using ShopAPI.Application.DTOs;
-using ShopAPI.Application.Interfaces.Service;
 using ShopAPI.Common;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace ShopAPI.Controllers;
 
@@ -19,6 +15,9 @@ public class CartController : ControllerBase
     private int UserId =>
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+    /// <summary>
+    /// Retrieves the current user's shopping cart items, including product details and quantities.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetCart()
     {
@@ -26,6 +25,9 @@ public class CartController : ControllerBase
         return Ok(items);
     }
 
+    /// <summary>
+    /// Adds a product to the current user's shopping cart. Validates that the product exists and is active before adding.
+    /// </summary>
     [HttpPost]
     public async Task<IActionResult> AddToCart(AddToCartDto dto)
     {
@@ -43,6 +45,11 @@ public class CartController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Updates the quantity of a specific product in the current user's shopping cart.
+    /// Validates that the product exists, is active,
+    /// and that the requested quantity does not exceed available stock before updating.
+    /// </summary>
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateQuantity(int id, [FromBody] int quantity)
     {
@@ -57,6 +64,10 @@ public class CartController : ControllerBase
 
     }
 
+    /// <summary>
+    /// Removes a specific product from the current user's shopping cart.
+    /// Validates that the product exists in the cart before attempting to remove it.
+    /// </summary>
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> RemoveFromCart(int id)
     {
@@ -64,6 +75,10 @@ public class CartController : ControllerBase
         return success ? Ok(new { message = "Item removed." }) : NotFound();
     }
 
+    /// <summary>
+    /// Clears all items from the current user's shopping cart.
+    /// Validates that the cart is not already empty before attempting to clear it.
+    /// </summary>
     [HttpDelete]
     public async Task<IActionResult> ClearCart()
     {
@@ -71,6 +86,11 @@ public class CartController : ControllerBase
         return Ok(new { message = "Cart cleared." });
     }
 
+    /// <summary>
+    /// Merges a list of items into the current user's shopping cart.
+    /// This is typically used when a user logs in and
+    /// has items in a temporary cart (e.g., from a guest session).
+    /// </summary>
     [HttpPost("merge")]
     public async Task<IActionResult> MergeCart(List<AddToCartDto> items)
     {

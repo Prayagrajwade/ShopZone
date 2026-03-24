@@ -1,7 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using ShopAPI.Application.DTOs;
-using ShopAPI.Domain.Entity;
-
 namespace ShopAPI.Infrastructure.Persistence.Data;
 
 public class AppDbContext : DbContext
@@ -29,6 +25,8 @@ public class AppDbContext : DbContext
             e.HasIndex(u => u.Email).IsUnique();
             e.Property(u => u.PasswordHash).IsRequired();
             e.Property(u => u.Role).IsRequired().HasMaxLength(20).HasDefaultValue("user");
+            e.Property(u => u.IsActive).HasDefaultValue(true);
+            e.Property(u => u.SecurityStamp).HasMaxLength(200);
         });
 
         // Product

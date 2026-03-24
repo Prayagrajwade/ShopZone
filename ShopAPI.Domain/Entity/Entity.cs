@@ -8,6 +8,8 @@ public class UserEntity
     public string PasswordHash { get; set; } = "";
     public string Role { get; set; } = "user";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsActive { get; set; } = true;
+    public string? SecurityStamp { get; set; }
 }
 
 public class ProductEntity

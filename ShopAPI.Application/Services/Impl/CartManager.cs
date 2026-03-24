@@ -1,5 +1,4 @@
 using ShopAPI.Application.Interfaces.Service;
-using ShopAPI.Common;
 using ShopAPI.Interfaces.Repository;
 
 namespace ShopAPI.Application.Services.Impl;

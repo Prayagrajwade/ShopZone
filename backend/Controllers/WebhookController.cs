@@ -1,7 +1,4 @@
 ﻿using Microsoft.AspNetCore.Cors;
-using ShopAPI.Application.Interfaces.Service;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Stripe;
 
 namespace ShopAPI.Controllers;
@@ -11,15 +8,16 @@ namespace ShopAPI.Controllers;
 [DisableCors]
 public class WebhookController : ControllerBase
 {
-    private readonly IConfiguration _config;
     private readonly IStripeWebhookManager _stripeWebhookManager;
 
-    public WebhookController(IConfiguration config, IStripeWebhookManager stripeWebhookManager)
+    public WebhookController(IStripeWebhookManager stripeWebhookManager)
     {
-        _config = config;
         _stripeWebhookManager = stripeWebhookManager;
     }
 
+    /// <summary>
+    /// Handles incoming Stripe webhook events. The request body contains the event data in JSON format,
+    /// </summary>
     [HttpPost]
     public async Task<IActionResult> Handle()
     {

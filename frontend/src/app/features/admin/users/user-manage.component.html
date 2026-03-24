@@ -1,0 +1,125 @@
+<div class="pm-page">
+
+  <div class="pm-header">
+    <h1>User Management</h1>
+    <button class="add-btn" (click)="openCreate()">+ Add User</button>
+  </div>
+
+  <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+    <input
+      type="text"
+      placeholder="Search users..."
+      [(ngModel)]="search"
+      (keyup)="onSearch()"
+      style="flex:1; padding:0.6rem; border-radius:8px; border:1px solid #e5e7eb;"
+    />
+  </div>
+
+  <!-- TABLE -->
+  <div class="products-table">
+
+    <div class="table-head">
+      <div>ID</div>
+      <div>Name</div>
+      <div>Email</div>
+      <div>Role</div>
+      <div>Status</div>
+      <div>Created</div>
+      <div>Actions</div>
+    </div>
+
+    <div class="table-row" *ngFor="let user of users">
+      <div>{{ user.id }}</div>
+      <div class="product-name">{{ user.name }}</div>
+      <div class="category">{{ user.email }}</div>
+      <div>{{ user.role }}</div>
+
+      <div>
+        <span class="status-dot" [ngClass]="{ 'active': user.isActive }">
+          {{ user.isActive ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+
+      <div>{{ user.createdAt | date:'short' }}</div>
+
+      <div class="actions">
+        <button class="edit-btn" (click)="openEdit(user)">Edit</button>
+        <button class="delete-btn" (click)="deleteUser(user.id)">Delete</button>
+        <button class="edit-btn" (click)="forceLogout(user.id)">Logout</button>
+      </div>
+    </div>
+
+  </div>
+
+
+  <div style="margin-top:1rem; display:flex; justify-content:center; gap:0.5rem;">
+    <button (click)="page = page - 1; loadUsers()" [disabled]="page === 1">Prev</button>
+    <span>Page {{ page }}</span>
+    <button (click)="page = page + 1; loadUsers()">Next</button>
+  </div>
+
+  <div class="modal-overlay" *ngIf="showModal">
+
+    <div class="modal">
+
+      <div class="modal-header">
+        <h2>{{ selectedUser ? 'Edit User' : 'Create User' }}</h2>
+        <button class="close-btn" (click)="closeModal()">✕</button>
+      </div>
+
+      <form [formGroup]="userForm">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Name</label>
+            <input formControlName="name" />
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input formControlName="email" />
+          </div>
+        </div>
+
+        <div class="form-row" *ngIf="!selectedUser">
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" formControlName="password" />
+          </div>
+
+          <div class="form-group">
+            <label>Role</label>
+            <input formControlName="role" />
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="selectedUser">
+          <label>Role</label>
+          <input formControlName="role" />
+        </div>
+
+        <!-- ERROR -->
+        <div class="error-msg" *ngIf="error">
+          {{ error }}
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" (click)="closeModal()">Cancel</button>
+
+          <button
+            type="button"
+            class="save-btn"
+            [disabled]="userForm.invalid"
+            (click)="saveUser()"
+          >
+            {{ selectedUser ? 'Update' : 'Create' }}
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+</div>

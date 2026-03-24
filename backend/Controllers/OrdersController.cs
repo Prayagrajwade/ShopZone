@@ -1,10 +1,5 @@
 using ShopAPI.Application.DTOs;
-using ShopAPI.Application.Interfaces.Service;
 using ShopAPI.Common;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-
 namespace ShopAPI.Controllers;
 
 [ApiController]
@@ -19,6 +14,11 @@ public class OrdersController : ControllerBase
     private int UserId =>
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+    /// <summary>
+    /// Creates a payment intent for the current user's cart.
+    /// Returns the client secret and payment intent ID
+    /// needed for processing the payment on the client side.
+    /// </summary>
     [HttpPost("create-payment-intent")]
     public async Task<IActionResult> CreatePaymentIntent()
     {
@@ -33,6 +33,9 @@ public class OrdersController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Confirms the order after successful payment.
+    /// </summary>
     [HttpPost("confirm")]
     public async Task<IActionResult> ConfirmOrder([FromBody] string paymentIntentId)
     {
@@ -47,6 +50,10 @@ public class OrdersController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Retrieves a list of orders for the current user,
+    /// including order details such as products, quantities, total amount, and order status.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetOrders()
     {
@@ -54,6 +61,9 @@ public class OrdersController : ControllerBase
         return Ok(orders);
     }
 
+    /// <summary>
+    /// Retrieves details of a specific order by its ID for the current user.
+    /// </summary>
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetOrder(int id)
     {
@@ -61,6 +71,10 @@ public class OrdersController : ControllerBase
         return order is null ? NotFound() : Ok(order);
     }
 
+
+    /// <summary>
+    /// Retrieves a list of all orders in the system for administrative purposes.
+    /// </summary>
     [Authorize(Roles = "admin")]
     [HttpGet("admin/all")]
     public async Task<IActionResult> GetAllOrders()
@@ -69,6 +83,10 @@ public class OrdersController : ControllerBase
         return Ok(orders);
     }
 
+    /// <summary>
+    /// Creates a payment intent for a "Buy Now" action,
+    /// which allows the user to purchase a single product immediately without adding it to the cart.
+    /// </summary>
     [HttpPost("buy-now")]
     public async Task<IActionResult> BuyNow([FromBody] BuyNowDto dto)
     {

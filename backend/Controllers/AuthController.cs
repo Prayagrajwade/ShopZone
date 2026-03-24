@@ -1,6 +1,4 @@
 using ShopAPI.Application.DTOs;
-using ShopAPI.Application.Interfaces.Service;
-using Microsoft.AspNetCore.Mvc;
 
 namespace ShopAPI.Controllers;
 
@@ -11,6 +9,11 @@ public class AuthController : ControllerBase
     private readonly IAuthManager _authManager;
 
     public AuthController(IAuthManager authManager) => _authManager = authManager;
+
+    /// <summary>
+    /// Registers a new user with the provided details
+    /// and returns an authentication token upon successful registration.
+    /// </summary>
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterDto dto)
@@ -26,6 +29,10 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Authenticates a user with the provided email and password,
+    /// returning an authentication token if the credentials are valid.
+    /// </summary>
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginDto dto)
     {

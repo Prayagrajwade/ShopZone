@@ -14,6 +14,10 @@ namespace ShopAPI.Controllers
             _seeder = seeder;
         }
 
+        /// <summary>
+        /// Seeds the database with default email templates for order confirmation,
+        /// shipping notification, and invoice.
+        /// </summary>
         [HttpPost("seed-invoice")]
         public async Task<IActionResult> SeedInvoice()
         {

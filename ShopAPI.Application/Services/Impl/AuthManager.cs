@@ -1,4 +1,3 @@
-using BCrypt.Net;
 using ShopAPI.Application.Interfaces.Service;
 using ShopAPI.Common;
 using ShopAPI.Interfaces.Repository;

@@ -15,6 +15,10 @@
         <a routerLink="/admin/products" routerLinkActive="active" class="nav-link">Manage Products</a>
       </ng-container>
 
+      <ng-container *ngIf="auth.isAdmin">
+        <a routerLink="/admin/users" routerLinkActive="active" class="nav-link">Users</a>
+      </ng-container>
+
       <ng-container *ngIf="!auth.isAdmin">
         <a routerLink="/cart" routerLinkActive="active" class="nav-link cart-link">
           <span>Cart</span>

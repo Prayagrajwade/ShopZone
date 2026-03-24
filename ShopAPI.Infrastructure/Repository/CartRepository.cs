@@ -1,5 +1,4 @@
 using ShopAPI.Common;
-using ShopAPI.Interfaces.Repository;
 
 namespace ShopAPI.Infrastructure.Repository;
 
