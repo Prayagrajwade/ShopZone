@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using ShopAPI.Application.Interfaces.Service;
 using ShopAPI.Common;
 using ShopAPI.Common.Email;
@@ -15,129 +16,213 @@ public class StripeWebhookManager : IStripeWebhookManager
     private readonly IEmailTemplateRepository _templateRepo;
     private readonly IEmailService _emailService;
     private readonly IUserRopository _userRepository;
+    private readonly ILogger<StripeWebhookManager> _logger;
 
     public StripeWebhookManager(IOrderRepository orderRepository, IConfiguration config,
         IEmailTemplateRepository templateRepo,
         IEmailService emailService,
-        IUserRopository userRepository)
+        IUserRopository userRepository,
+        ILogger<StripeWebhookManager> logger)
     {
         _orderRepository = orderRepository;
         _config = config;
         _templateRepo = templateRepo;
         _emailService = emailService;
         _userRepository = userRepository;
+        _logger = logger;
     }
 
     public async Task HandleEventAsync(string json, string signatureHeader)
     {
-        var webhookSecret = _config["Stripe:WebhookSecret"]!;
-
-        var stripeEvent = EventUtility.ConstructEvent(
-            json,
-            signatureHeader,
-            webhookSecret,
-            throwOnApiVersionMismatch: false
-        );
-
-        switch (stripeEvent.Type)
+        try
         {
-            case AppConstants.PaymentEvents.Succeeded:
-                await HandlePaymentSucceeded(stripeEvent, json);
-                break;
+            _logger.LogInformation("Processing Stripe webhook event");
 
-            case AppConstants.PaymentEvents.Failed:
-                await HandlePaymentFailed(stripeEvent);
-                break;
+            var webhookSecret = _config["Stripe:WebhookSecret"]!;
+
+            var stripeEvent = EventUtility.ConstructEvent(
+                json,
+                signatureHeader,
+                webhookSecret,
+                throwOnApiVersionMismatch: false
+            );
+
+            _logger.LogInformation("Stripe event type: {EventType}", stripeEvent.Type);
+
+            switch (stripeEvent.Type)
+            {
+                case AppConstants.PaymentEvents.Succeeded:
+                    _logger.LogInformation("Handling payment succeeded event");
+                    await HandlePaymentSucceeded(stripeEvent, json);
+                    break;
+
+                case AppConstants.PaymentEvents.Failed:
+                    _logger.LogInformation("Handling payment failed event");
+                    await HandlePaymentFailed(stripeEvent);
+                    break;
+
+                default:
+                    _logger.LogWarning("Unhandled event type: {EventType}", stripeEvent.Type);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing Stripe webhook event");
+            throw;
         }
     }
 
     private async Task HandlePaymentSucceeded(Event stripeEvent, string json)
     {
-        var intent = stripeEvent.Data.Object as PaymentIntent;
-        if (intent is null) return;
-
-        var order = await _orderRepository.GetOrderByStripeIdAsync(intent.Id);
-
-        if (order is null)
+        try
         {
-            await Task.Delay(5000);
-            order = await _orderRepository.GetOrderByStripeIdAsync(intent.Id);
+            var intent = stripeEvent.Data.Object as PaymentIntent;
+            if (intent is null)
+            {
+                _logger.LogWarning("PaymentIntent is null in succeeded event");
+                return;
+            }
+
+            _logger.LogInformation("Processing payment succeeded for PaymentIntentId: {PaymentIntentId}", intent.Id);
+
+            var order = await _orderRepository.GetOrderByStripeIdAsync(intent.Id);
 
             if (order is null)
             {
-                Console.WriteLine("Order still not found after retry");
+                _logger.LogWarning("Order not found for PaymentIntentId: {PaymentIntentId}, retrying after delay", intent.Id);
+                await Task.Delay(5000);
+                order = await _orderRepository.GetOrderByStripeIdAsync(intent.Id);
+
+                if (order is null)
+                {
+                    _logger.LogError("Order still not found after retry for PaymentIntentId: {PaymentIntentId}", intent.Id);
+                    return;
+                }
+            }
+
+            _logger.LogInformation("Found order {OrderId} for PaymentIntentId: {PaymentIntentId}", order.Id, intent.Id);
+
+            foreach (var item in order.Items)
+            {
+                var product = await _orderRepository.GetProductAsync(item.ProductId);
+
+                if (product == null)
+                {
+                    _logger.LogWarning("Product {ProductId} not found for order item", item.ProductId);
+                    continue;
+                }
+
+                if (product.Stock < item.Quantity)
+                {
+                    _logger.LogError("Not enough stock for product {ProductName} (Stock: {Stock}, Required: {Quantity})", 
+                        product.Name, product.Stock, item.Quantity);
+                    throw new Exception($"Not enough stock for product {product.Name}");
+                }
+
+                product.Stock -= item.Quantity;
+                _logger.LogInformation("Updated stock for product {ProductName}, New Stock: {NewStock}", 
+                    product.Name, product.Stock);
+            }
+
+            var oldStatus = order.Status;
+            order.Status = AppConstants.OrderStatus.OnTheWay;
+
+            await _orderRepository.UpdateOrderAsync(order);
+            _logger.LogInformation("Updated order {OrderId} status from {OldStatus} to {NewStatus}", 
+                order.Id, oldStatus, order.Status);
+
+            var template = await _templateRepo.GetByTypeAsync(AppConstants.TemeplateType.Invoice);
+            if (template is null)
+            {
+                _logger.LogWarning("Email template not found for type: {TemplateType}", AppConstants.TemeplateType.Invoice);
                 return;
             }
-        }
 
-        foreach (var item in order.Items)
-        {
-            var product = await _orderRepository.GetProductAsync(item.ProductId);
+            _logger.LogInformation("Email template found for order {OrderId}", order.Id);
 
-            if (product == null) continue;
+            var userDetails = await _userRepository.GetUSerDetailsAsync(order.UserId);
+            _logger.LogInformation("Retrieved user details for UserId: {UserId}", order.UserId);
 
-            if (product.Stock < item.Quantity)
+            var body = EmailTemplateHelper.Replace(template.Body, new Dictionary<string, string>
             {
-                throw new Exception($"Not enough stock for product {product.Name}");
+                ["UserName"] = userDetails.Name,
+                ["OrderId"] = order.Id.ToString(),
+                ["Amount"] = order.TotalAmount.ToString()
+            });
+
+            var subject = EmailTemplateHelper.Replace(template.Subject, new Dictionary<string, string>
+            {
+                ["OrderId"] = order.Id.ToString()
+            });
+
+            var invoiceBytes = GenerateInvoice(order);
+            _logger.LogInformation("Generated invoice PDF for order {OrderId}, Size: {InvoiceSize} bytes", 
+                order.Id, invoiceBytes.Length);
+
+            var recipientEmail = "test@yopmail.com"; //userDetails?.Email ??
+
+            try
+            {
+                _logger.LogInformation("Sending invoice email to {RecipientEmail} for order {OrderId}", 
+                    recipientEmail, order.Id);
+
+                await _emailService.SendEmailAsync(
+                    recipientEmail,
+                    subject,
+                    body,
+                    invoiceBytes,
+                    $"Invoice_{order.Id}.pdf"
+                );
+
+                _logger.LogInformation("Invoice email sent successfully to {RecipientEmail} for order {OrderId}", 
+                    recipientEmail, order.Id);
             }
-
-            product.Stock -= item.Quantity;
-        }
-
-        var oldStatus = order.Status;
-        order.Status = AppConstants.OrderStatus.OnTheWay;
-
-        await _orderRepository.UpdateOrderAsync(order);
-
-        var template = await _templateRepo.GetByTypeAsync(AppConstants.TemeplateType.Invoice);
-        if (template is null) return;
-
-        var userDetails = await _userRepository.GetUSerDetailsAsync(order.UserId);
-
-        var body = EmailTemplateHelper.Replace(template.Body, new Dictionary<string, string>
-        {
-            ["UserName"] = userDetails.Name,
-            ["OrderId"] = order.Id.ToString(),
-            ["Amount"] = order.TotalAmount.ToString()
-        });
-
-        var subject = EmailTemplateHelper.Replace(template.Subject, new Dictionary<string, string>
-        {
-            ["OrderId"] = order.Id.ToString()
-        });
-
-        var invoiceBytes = GenerateInvoice(order);
-
-        var recipientEmail =  "test@yopmail.com"; //userDetails?.Email ??
-        try
-        {
-            //await _emailService.SendEmailAsync(
-            //    recipientEmail,
-            //    subject,
-            //    body,
-            //    invoiceBytes,
-            //    $"Invoice_{order.Id}.pdf"
-            //);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send invoice email to {RecipientEmail} for order {OrderId}", 
+                    recipientEmail, order.Id);
+            }
         }
         catch (Exception ex)
         {
-            // Log the error but don't rethrow so webhook processing can continue
-            Console.WriteLine($"Failed to send email to {recipientEmail}: {ex.Message}");
+            _logger.LogError(ex, "Error in HandlePaymentSucceeded");
+            throw;
         }
     }
 
     private async Task HandlePaymentFailed(Event stripeEvent)
     {
-        var intent = stripeEvent.Data.Object as PaymentIntent;
-        if (intent is null) return;
+        try
+        {
+            var intent = stripeEvent.Data.Object as PaymentIntent;
+            if (intent is null)
+            {
+                _logger.LogWarning("PaymentIntent is null in failed event");
+                return;
+            }
 
-        var order = await _orderRepository.GetOrderByStripeIdAsync(intent.Id);
-        if (order is null) return;
+            _logger.LogInformation("Processing payment failed for PaymentIntentId: {PaymentIntentId}", intent.Id);
 
-        var oldStatus = order.Status;
-        order.Status = AppConstants.OrderStatus.PaymentFailed;
+            var order = await _orderRepository.GetOrderByStripeIdAsync(intent.Id);
+            if (order is null)
+            {
+                _logger.LogWarning("Order not found for failed PaymentIntentId: {PaymentIntentId}", intent.Id);
+                return;
+            }
 
-        await _orderRepository.UpdateOrderAsync(order);
+            var oldStatus = order.Status;
+            order.Status = AppConstants.OrderStatus.PaymentFailed;
+
+            await _orderRepository.UpdateOrderAsync(order);
+            _logger.LogInformation("Updated order {OrderId} status to PaymentFailed (previous status: {OldStatus})", 
+                order.Id, oldStatus);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in HandlePaymentFailed");
+            throw;
+        }
     }
 
     public byte[] GenerateInvoice(OrderEntity order)

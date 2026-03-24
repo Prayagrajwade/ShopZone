@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using ShopAPI.Common.Email;
 using ShopAPI.Interfaces.Email;
 using ShopAPI.Interfaces.Repository;
@@ -9,41 +10,57 @@ public class EmailService : IEmailService
 {
     private readonly EmailSettings _settings;
     private readonly IEmailTemplateRepository _templateRepository;
+    private readonly ILogger<EmailService> _logger;
 
-    public EmailService(IOptions<EmailSettings> settings, IEmailTemplateRepository emailTemplateRepository)
+    public EmailService(IOptions<EmailSettings> settings, IEmailTemplateRepository emailTemplateRepository, ILogger<EmailService> logger)
     {
         _settings = settings.Value;
         _templateRepository = emailTemplateRepository;
+        _logger = logger;
     }
 
     public async Task SendEmailAsync(string to, string subject, string body)
     {
-        var smtp = new SmtpClient(_settings.Host, _settings.Port)
+        try
         {
-            Credentials = new NetworkCredential(
-                _settings.Username,
-                _settings.Password
-            ),
-            EnableSsl = true
-        };
+            _logger.LogInformation("Sending email to {RecipientEmail} with subject: {Subject}", to, subject);
 
-        var message = new MailMessage(
-            _settings.From,
-            to,
-            subject,
-            body
-        )
+            var smtp = new SmtpClient(_settings.Host, _settings.Port)
+            {
+                Credentials = new NetworkCredential(
+                    _settings.Username,
+                    _settings.Password
+                ),
+                EnableSsl = true
+            };
+
+            var message = new MailMessage(
+                _settings.From,
+                to,
+                subject,
+                body
+            )
+            {
+                IsBodyHtml = true
+            };
+
+            await smtp.SendMailAsync(message);
+            _logger.LogInformation("Email sent successfully to {RecipientEmail}", to);
+        }
+        catch (Exception ex)
         {
-            IsBodyHtml = true
-        };
-
-        await smtp.SendMailAsync(message);
+            _logger.LogError(ex, "Failed to send email to {RecipientEmail} with subject: {Subject}", to, subject);
+            throw;
+        }
     }
 
     public async Task SendEmailAsync(string to, string subject, string body, byte[]? attachment = null, string? fileName = null)
     {
         try
         {
+            _logger.LogInformation("Sending email to {RecipientEmail} with subject: {Subject} and attachment: {FileName}", 
+                to, subject, fileName ?? "none");
+
             var smtp = new SmtpClient(_settings.Host, _settings.Port)
             {
                 Credentials = new NetworkCredential(
@@ -63,13 +80,16 @@ public class EmailService : IEmailService
                 message.Attachments.Add(
                     new Attachment(new MemoryStream(attachment), fileName)
                 );
+                _logger.LogInformation("Attachment added: {FileName} ({AttachmentSize} bytes)", fileName, attachment.Length);
             }
 
            await smtp.SendMailAsync(message);
+            _logger.LogInformation("Email with attachment sent successfully to {RecipientEmail}", to);
         }
         catch(Exception ex)
         {
-            Console.WriteLine("Email failed: " + ex.Message);
+            _logger.LogError(ex, "Failed to send email to {RecipientEmail} with subject: {Subject} and attachment: {FileName}", 
+                to, subject, fileName ?? "none");
             throw;
         }
     }
