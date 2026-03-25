@@ -32,6 +32,7 @@ builder.Services.AddScoped<ICartManager, CartManager>();
 builder.Services.AddScoped<IOrderManager, OrderManager>();
 builder.Services.AddScoped<IStripeWebhookManager, StripeWebhookManager>();
 builder.Services.AddScoped<IUserManager, UserManager>();
+builder.Services.AddScoped<ISeedManager, SeedManager>();
 builder.Services.Configure<PaymentSettings>(builder.Configuration.GetSection("Payment"));
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 

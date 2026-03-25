@@ -15,25 +15,8 @@ namespace ShopAPI.Controllers
         }
 
         /// <summary>
-        /// Seeds the database with default email templates for order confirmation,
-        /// shipping notification, and invoice.
+        /// Sends a test email to verify that the email service is working correctly.
         /// </summary>
-        [HttpPost("seed-invoice")]
-        public async Task<IActionResult> SeedInvoice()
-        {
-            try
-            {
-              await _seeder.SeedInvoiceTemplateAsync();
-              return Ok();
-            }
-            catch (Exception ex)
-            {
-                {
-                    return BadRequest(new { message = ex.Message });
-                }
-            }
-        }
-
         [HttpGet("test-email")]
         [AllowAnonymous]
         public async Task<IActionResult> TestEmail()

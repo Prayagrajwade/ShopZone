@@ -12,5 +12,6 @@
         Task<ProductDto?> UpdateAsync(int id, UpdateProductDto dto);
         Task<bool> DeleteAsync(int id);
         Task<ProductEntity?> FindByIdAsync(int id);
+        Task SeedProductsAsync(List<ProductEntity> products);
     }
 }

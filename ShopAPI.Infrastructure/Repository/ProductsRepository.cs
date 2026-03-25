@@ -114,6 +114,12 @@
             return await _db.Products.FindAsync(id);
         }
 
+        public async Task SeedProductsAsync(List<ProductEntity> products)
+        {
+            _db.Products.AddRange(products);
+            await _db.SaveChangesAsync();
+        }
+
         private static ProductDto MapToDto(ProductEntity p) =>
             new(p.Id, p.Name, p.Description, p.Price, p.Stock, p.Category, p.ImageUrl, p.IsActive);
     }

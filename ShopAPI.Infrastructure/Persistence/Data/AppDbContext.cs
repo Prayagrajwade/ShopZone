@@ -144,26 +144,5 @@ public class AppDbContext : DbContext
             e.HasNoKey();
             e.ToView(null);
         });
-
-        //Seed admin user
-        modelBuilder.Entity<UserEntity>().HasData(new UserEntity
-        {
-            Id = 1,
-            Name = "Admin",
-            Email = "admin@shop.com",
-            PasswordHash = "",//BCrypt.Net.BCrypt.HashPassword("admin123")
-            Role = "admin",
-            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-        });
-
-        // Seed sample products
-        modelBuilder.Entity<ProductEntity>().HasData(
-            new ProductEntity { Id = 1, Name = "Wireless Headphones", Description = "Premium noise-cancelling wireless headphones with 30hr battery", Price = 79.99m, Stock = 50, Category = "Electronics", ImageUrl = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400", IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new ProductEntity { Id = 2, Name = "Smart Watch", Description = "Feature-packed smartwatch with health tracking", Price = 149.99m, Stock = 30, Category = "Electronics", ImageUrl = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400", IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new ProductEntity { Id = 3, Name = "Running Shoes", Description = "Lightweight performance running shoes", Price = 89.99m, Stock = 75, Category = "Footwear", ImageUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new ProductEntity { Id = 4, Name = "Coffee Maker", Description = "12-cup programmable coffee maker with thermal carafe", Price = 49.99m, Stock = 40, Category = "Kitchen", ImageUrl = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400", IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new ProductEntity { Id = 5, Name = "Leather Wallet", Description = "Slim genuine leather bifold wallet with RFID blocking", Price = 29.99m, Stock = 100, Category = "Accessories", ImageUrl = "https://images.unsplash.com/photo-1627123424574-724758594e93?w=400", IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new ProductEntity { Id = 6, Name = "Backpack", Description = "Durable 30L travel backpack with laptop compartment", Price = 59.99m, Stock = 60, Category = "Bags", ImageUrl = "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400", IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
-        );
     }
 }
