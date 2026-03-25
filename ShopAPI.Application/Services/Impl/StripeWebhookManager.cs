@@ -144,11 +144,31 @@ public class StripeWebhookManager : IStripeWebhookManager
             var userDetails = await _userRepository.GetUSerDetailsAsync(order.UserId);
             _logger.LogInformation("Retrieved user details for UserId: {UserId}", order.UserId);
 
+            var productRows = "";
+
+            foreach (var item in order.Items)
+            {
+                var product = await _orderRepository.GetProductAsync(item.ProductId);
+
+                if (product == null) continue;
+
+                var total = item.Quantity * product.Price;
+
+                productRows += $@"
+                <tr>
+                    <td>{product.Name}</td>
+                    <td>₹{product.Price}</td>
+                    <td>{item.Quantity}</td>
+                    <td>₹{total}</td>
+                </tr>";
+            }
+
             var body = EmailTemplateHelper.Replace(template.Body, new Dictionary<string, string>
             {
                 ["UserName"] = userDetails.Name,
                 ["OrderId"] = order.Id.ToString(),
-                ["Amount"] = order.TotalAmount.ToString()
+                ["Amount"] = order.TotalAmount.ToString(),
+                ["ProductRows"] = productRows
             });
 
             var subject = EmailTemplateHelper.Replace(template.Subject, new Dictionary<string, string>
@@ -232,8 +252,37 @@ public class StripeWebhookManager : IStripeWebhookManager
         var pdf = new iText.Kernel.Pdf.PdfDocument(writer);
         var doc = new iText.Layout.Document(pdf);
 
-        doc.Add(new iText.Layout.Element.Paragraph($"Invoice #{order.Id}"));
-        doc.Add(new iText.Layout.Element.Paragraph($"Amount: ₹{order.TotalAmount}"));
+        doc.Add(new iText.Layout.Element.Paragraph($"Invoice #{order.Id}")
+            .SetFontSize(18));
+
+        doc.Add(new iText.Layout.Element.Paragraph($"Total Amount: ₹{order.TotalAmount}"));
+        doc.Add(new iText.Layout.Element.Paragraph("\n"));
+
+        var table = new iText.Layout.Element.Table(4).UseAllAvailableWidth();
+
+        table.AddHeaderCell("Product");
+        table.AddHeaderCell("Price");
+        table.AddHeaderCell("Quantity");
+        table.AddHeaderCell("Total");
+
+        foreach (var item in order.Items)
+        {
+            var product = item.Product;
+
+            if (product == null) continue;
+
+            var total = item.Quantity * product.Price;
+
+            table.AddCell(product.Name);
+            table.AddCell($"₹{product.Price}");
+            table.AddCell(item.Quantity.ToString());
+            table.AddCell($"₹{total}");
+        }
+
+        doc.Add(table);
+
+        doc.Add(new iText.Layout.Element.Paragraph("\n"));
+        doc.Add(new iText.Layout.Element.Paragraph($"Grand Total: ₹{order.TotalAmount}"));
 
         doc.Close();
         return ms.ToArray();

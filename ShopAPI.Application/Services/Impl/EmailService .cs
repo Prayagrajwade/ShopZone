@@ -107,12 +107,30 @@ public class EmailService : IEmailService
             Type = "Invoice",
             Subject = "Invoice - Order {{OrderId}}",
             Body = @"
-                <h2>Order Invoice</h2>
-                <p>Hello {{UserName}},</p>
-                <p>Your order <b>#{{OrderId}}</b> is confirmed.</p>
-                <p>Total: ₹{{Amount}}</p>
-                <p>Thanks for shopping!</p>
-            "
+                    <h2>Order Invoice</h2>
+
+                    <p>Hello {{UserName}},</p>
+
+                    <p>Your order <b>#{{OrderId}}</b> is confirmed.</p>
+
+                    <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; width: 100%;'>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{ProductRows}}
+                        </tbody>
+                    </table>
+
+                    <h3>Total Amount: ₹{{Amount}}</h3>
+
+                    <p>Thanks for shopping!</p>
+                "
         };
 
         await _templateRepository.AddAsync(template);
