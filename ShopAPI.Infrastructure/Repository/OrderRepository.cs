@@ -72,4 +72,64 @@ public class OrderRepository : IOrderRepository
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task CreatePaymentLogAsync(PaymentLogEntity paymentLog)
+    {
+        _db.PaymentLogs.Add(paymentLog);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task CreateOrderStatusLogAsync(OrderStatusLogEntity statusLog)
+    {
+        _db.OrderStatusLogs.Add(statusLog);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<PaymentLogEntity>> GetPaymentLogsByOrderAsync(int orderId)
+    {
+        return await _db.PaymentLogs
+            .Where(p => p.OrderId == orderId)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<OrderStatusLogEntity>> GetStatusLogsByOrderAsync(int orderId)
+    {
+        return await _db.OrderStatusLogs
+            .Where(s => s.OrderId == orderId)
+            .OrderByDescending(s => s.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task DeleteOldPaymentLogsAsync(int daysOld)
+    {
+        var cutoffDate = DateTime.UtcNow.AddDays(-daysOld);
+        var logsToDelete = _db.PaymentLogs
+            .Where(p => p.OrderId == null && p.CreatedAt < cutoffDate)
+            .ToList();
+
+        if (logsToDelete.Any())
+        {
+            _db.PaymentLogs.RemoveRange(logsToDelete);
+            await _db.SaveChangesAsync();
+        }
+    }
+
+    public async Task DeleteOldOrderStatusLogsAsync(int daysOld)
+    {
+        var cutoffDate = DateTime.UtcNow.AddDays(-daysOld);
+        var oldestStatusPerOrder = _db.OrderStatusLogs
+            .Where(s => s.CreatedAt < cutoffDate)
+            .GroupBy(s => s.OrderId)
+            .Select(g => g.OrderByDescending(s => s.CreatedAt).First())
+            .Select(s => s.Id)
+            .ToList();
+
+        if (oldestStatusPerOrder.Any())
+        {
+            var logsToDelete = _db.OrderStatusLogs.Where(s => oldestStatusPerOrder.Contains(s.Id)).ToList();
+            _db.OrderStatusLogs.RemoveRange(logsToDelete);
+            await _db.SaveChangesAsync();
+        }
+    }
 }

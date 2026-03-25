@@ -1,4 +1,4 @@
-namespace ShopAPI.Application.Interfaces.Service;
+namespace ShopAPI.Application.Interfaces.Managers;
 
 public interface IOrderManager
 {
@@ -8,4 +8,7 @@ public interface IOrderManager
     Task<IEnumerable<OrderDto>> GetOrdersByUserAsync(int userId);
     Task<OrderDto?> GetOrderByIdAsync(int userId, int orderId);
     Task<IEnumerable<AdminOrderDto>> GetAllOrdersAdminAsync();
+    Task<OrderDetailDto?> GetOrderWithLogsAsync(int userId, int orderId);
+    Task<OrderDetailDto?> GetOrderWithLogsAdminAsync(int orderId);
+    Task CleanupOldLogsAsync(int paymentLogsDaysOld = 90, int statusLogsDaysOld = 180);
 }

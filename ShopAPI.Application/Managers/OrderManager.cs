@@ -1,12 +1,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using ShopAPI.Application.Interfaces.Service;
 using ShopAPI.Common;
 using ShopAPI.Interfaces.Repository;
 using Stripe;
 
-namespace ShopAPI.Application.Services.Impl;
+namespace ShopAPI.Application.Managers;
 
 public class OrderManager : IOrderManager
 {
@@ -270,12 +269,100 @@ public class OrderManager : IOrderManager
         }
     }
 
+    public async Task<OrderDetailDto?> GetOrderWithLogsAsync(int userId, int orderId)
+    {
+        try
+        {
+            _logger.LogInformation("Fetching order with logs - OrderId: {OrderId} for UserId: {UserId}", orderId, userId);
+            var order = await _orderRepository.GetOrderByIdAsync(orderId, userId);
+            if (order is null)
+            {
+                _logger.LogWarning("Order not found: OrderId: {OrderId}, UserId: {UserId}", orderId, userId);
+                return null;
+            }
+
+            var paymentLogs = await _orderRepository.GetPaymentLogsByOrderAsync(orderId);
+            var statusLogs = await _orderRepository.GetStatusLogsByOrderAsync(orderId);
+
+            _logger.LogInformation("Retrieved {PaymentLogCount} payment logs and {StatusLogCount} status logs for OrderId: {OrderId}", 
+                paymentLogs.Count(), statusLogs.Count(), orderId);
+
+            return MapToDetailDto(order, paymentLogs, statusLogs);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching order with logs - OrderId: {OrderId} for UserId: {UserId}", orderId, userId);
+            throw;
+        }
+    }
+
+    public async Task<OrderDetailDto?> GetOrderWithLogsAdminAsync(int orderId)
+    {
+        try
+        {
+            _logger.LogInformation("Admin: Fetching order with logs - OrderId: {OrderId}", orderId);
+            var order = await _orderRepository.GetOrderByIdAsync(orderId, 0);
+            if (order is null)
+            {
+                var allOrders = await _orderRepository.GetAllOrdersAsync();
+                order = allOrders.FirstOrDefault(o => o.Id == orderId);
+                if (order is null)
+                {
+                    _logger.LogWarning("Admin: Order not found - OrderId: {OrderId}", orderId);
+                    return null;
+                }
+            }
+
+            var paymentLogs = await _orderRepository.GetPaymentLogsByOrderAsync(orderId);
+            var statusLogs = await _orderRepository.GetStatusLogsByOrderAsync(orderId);
+
+            _logger.LogInformation("Admin: Retrieved {PaymentLogCount} payment logs and {StatusLogCount} status logs for OrderId: {OrderId}", 
+                paymentLogs.Count(), statusLogs.Count(), orderId);
+
+            return MapToDetailDto(order, paymentLogs, statusLogs);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Admin: Error fetching order with logs - OrderId: {OrderId}", orderId);
+            throw;
+        }
+    }
+
+    public async Task CleanupOldLogsAsync(int paymentLogsDaysOld = 90, int statusLogsDaysOld = 180)
+    {
+        try
+        {
+            _logger.LogInformation("Cleaning up old logs - PaymentLogs older than {PaymentDays} days, StatusLogs older than {StatusDays} days", 
+                paymentLogsDaysOld, statusLogsDaysOld);
+
+            await _orderRepository.DeleteOldPaymentLogsAsync(paymentLogsDaysOld);
+            await _orderRepository.DeleteOldOrderStatusLogsAsync(statusLogsDaysOld);
+
+            _logger.LogInformation("Successfully cleaned up old logs");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cleaning up old logs");
+            throw;
+        }
+    }
+
     private static OrderDto MapToDto(OrderEntity o) => new(
         o.Id,
         o.Status,
         o.TotalAmount,
         o.CreatedAt,
         o.Items.Select(MapOrderItemToDto).ToList()
+    );
+
+    private static OrderDetailDto MapToDetailDto(OrderEntity o, IEnumerable<PaymentLogEntity> paymentLogs, IEnumerable<OrderStatusLogEntity> statusLogs) => new(
+        o.Id,
+        o.Status,
+        o.TotalAmount,
+        o.CreatedAt,
+        o.Items.Select(MapOrderItemToDto).ToList(),
+        paymentLogs.Select(p => new PaymentLogDto(p.Id, p.StripeEventId, p.EventType, p.PaymentIntentId, p.Status, p.CreatedAt)).ToList(),
+        statusLogs.Select(s => new StatusLogDto(s.Id, s.OldStatus, s.NewStatus, s.Note, s.CreatedAt)).ToList()
     );
 
     private static OrderItemDto MapOrderItemToDto(OrderItemEntity i) => new(

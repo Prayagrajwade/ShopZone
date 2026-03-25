@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Logging;
-using ShopAPI.Application.Interfaces.Service;
+using ShopAPI.Application.Interfaces.Managers;
 using ShopAPI.Interfaces.Repository;
 
-namespace ShopAPI.Application.Services.Impl;
+namespace ShopAPI.Application.Managers;
 
 public class CartManager : ICartManager
 {

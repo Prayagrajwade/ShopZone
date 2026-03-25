@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Cors;
+using ShopAPI.Application.Interfaces.Managers;
 using Stripe;
 
 namespace ShopAPI.Controllers;

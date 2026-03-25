@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging;
-using ShopAPI.Application.Interfaces.Service;
+using ShopAPI.Application.Interfaces.Managers;
 using ShopAPI.Common;
 using ShopAPI.Interfaces.Repository;
 using ShopAPI.Services;
 
-namespace ShopAPI.Application.Services.Impl;
+namespace ShopAPI.Application.Managers;
 
 public class AuthManager : IAuthManager
 {

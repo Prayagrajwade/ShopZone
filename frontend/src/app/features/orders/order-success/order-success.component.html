@@ -41,7 +41,7 @@
         </div>
         <div>
           <span class="order-label">Status</span>
-          <span class="status-badge">{{ order.status | titlecase }}</span>
+          <span class="status-badge">{{ getStatusIcon(order.status) }} {{ getStatusLabel(order.status) }}</span>
         </div>
         <div>
           <span class="order-label">Total</span>

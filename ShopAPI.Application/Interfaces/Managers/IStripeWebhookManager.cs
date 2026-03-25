@@ -1,4 +1,4 @@
-namespace ShopAPI.Application.Interfaces.Service;
+namespace ShopAPI.Application.Interfaces.Managers;
 
 public interface IStripeWebhookManager
 {

@@ -1,4 +1,5 @@
 using ShopAPI.Application.DTOs;
+using ShopAPI.Application.Interfaces.Managers;
 using ShopAPI.Common;
 
 namespace ShopAPI.Controllers;

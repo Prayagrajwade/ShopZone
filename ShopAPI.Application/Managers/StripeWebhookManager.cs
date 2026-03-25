@@ -1,13 +1,13 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using ShopAPI.Application.Interfaces.Service;
+using ShopAPI.Application.Interfaces.Managers;
 using ShopAPI.Common;
 using ShopAPI.Common.Email;
 using ShopAPI.Interfaces.Email;
 using ShopAPI.Interfaces.Repository;
 using Stripe;
 
-namespace ShopAPI.Application.Services.Impl;
+namespace ShopAPI.Application.Managers;
 
 public class StripeWebhookManager : IStripeWebhookManager
 {
@@ -91,21 +91,33 @@ public class StripeWebhookManager : IStripeWebhookManager
 
             _logger.LogInformation("Processing payment succeeded for PaymentIntentId: {PaymentIntentId}", intent.Id);
 
+            var paymentLog = new PaymentLogEntity
+            {
+                StripeEventId = stripeEvent.Id,
+                EventType = stripeEvent.Type,
+                PaymentIntentId = intent.Id,
+                Status = intent.Status,
+                RawJson = json
+            };
+
             var order = await _orderRepository.GetOrderByStripeIdAsync(intent.Id);
 
             if (order is null)
             {
                 _logger.LogError("CRITICAL: Order not found for PaymentIntentId: {PaymentIntentId}. " +
                     "Order should have been created when PaymentIntent was created.", intent.Id);
+                await _orderRepository.CreatePaymentLogAsync(paymentLog);
                 return;
             }
 
+            paymentLog.OrderId = order.Id;
             _logger.LogInformation("Found order {OrderId} for PaymentIntentId: {PaymentIntentId}", order.Id, intent.Id);
 
             if (!string.IsNullOrEmpty(order.WebhookEventId) && order.WebhookEventId == stripeEvent.Id)
             {
                 _logger.LogInformation("Webhook already processed for this order: OrderId: {OrderId}, EventId: {EventId}. Skipping.", 
                     order.Id, stripeEvent.Id);
+                await _orderRepository.CreatePaymentLogAsync(paymentLog);
                 return;
             }
 
@@ -115,6 +127,7 @@ public class StripeWebhookManager : IStripeWebhookManager
                 order.WebhookEventId = stripeEvent.Id;
                 order.UpdatedAt = DateTime.UtcNow;
                 await _orderRepository.UpdateOrderAsync(order);
+                await _orderRepository.CreatePaymentLogAsync(paymentLog);
                 return;
             }
 
@@ -147,6 +160,17 @@ public class StripeWebhookManager : IStripeWebhookManager
             order.UpdatedAt = DateTime.UtcNow;
 
             await _orderRepository.UpdateOrderAsync(order);
+
+            await _orderRepository.CreateOrderStatusLogAsync(new OrderStatusLogEntity
+            {
+                OrderId = order.Id,
+                OldStatus = oldStatus,
+                NewStatus = order.Status,
+                Note = "Payment succeeded via Stripe webhook"
+            });
+
+            await _orderRepository.CreatePaymentLogAsync(paymentLog);
+
             _logger.LogInformation("Updated order {OrderId} status from {OldStatus} to {NewStatus}. Stock reserved: true, WebhookEventId: {EventId}", 
                 order.Id, oldStatus, order.Status, stripeEvent.Id);
 
@@ -242,17 +266,41 @@ public class StripeWebhookManager : IStripeWebhookManager
 
             _logger.LogInformation("Processing payment failed for PaymentIntentId: {PaymentIntentId}", intent.Id);
 
+            var paymentLog = new PaymentLogEntity
+            {
+                StripeEventId = stripeEvent.Id,
+                EventType = stripeEvent.Type,
+                PaymentIntentId = intent.Id,
+                Status = intent.Status,
+                RawJson = intent.ToJson()
+            };
+
             var order = await _orderRepository.GetOrderByStripeIdAsync(intent.Id);
             if (order is null)
             {
                 _logger.LogWarning("Order not found for failed PaymentIntentId: {PaymentIntentId}", intent.Id);
+                await _orderRepository.CreatePaymentLogAsync(paymentLog);
                 return;
             }
 
+            paymentLog.OrderId = order.Id;
+
             var oldStatus = order.Status;
             order.Status = AppConstants.OrderStatus.PaymentFailed;
+            order.UpdatedAt = DateTime.UtcNow;
 
             await _orderRepository.UpdateOrderAsync(order);
+
+            await _orderRepository.CreateOrderStatusLogAsync(new OrderStatusLogEntity
+            {
+                OrderId = order.Id,
+                OldStatus = oldStatus,
+                NewStatus = order.Status,
+                Note = "Payment failed via Stripe webhook"
+            });
+
+            await _orderRepository.CreatePaymentLogAsync(paymentLog);
+
             _logger.LogInformation("Updated order {OrderId} status to PaymentFailed (previous status: {OldStatus})", 
                 order.Id, oldStatus);
         }
@@ -276,12 +324,24 @@ public class StripeWebhookManager : IStripeWebhookManager
 
             _logger.LogInformation("Processing payment canceled for PaymentIntentId: {PaymentIntentId}", intent.Id);
 
+            var paymentLog = new PaymentLogEntity
+            {
+                StripeEventId = stripeEvent.Id,
+                EventType = stripeEvent.Type,
+                PaymentIntentId = intent.Id,
+                Status = intent.Status,
+                RawJson = intent.ToJson()
+            };
+
             var order = await _orderRepository.GetOrderByStripeIdAsync(intent.Id);
             if (order is null)
             {
                 _logger.LogWarning("Order not found for canceled PaymentIntentId: {PaymentIntentId}", intent.Id);
+                await _orderRepository.CreatePaymentLogAsync(paymentLog);
                 return;
             }
+
+            paymentLog.OrderId = order.Id;
 
             var oldStatus = order.Status;
 
@@ -291,6 +351,17 @@ public class StripeWebhookManager : IStripeWebhookManager
                 order.UpdatedAt = DateTime.UtcNow;
 
                 await _orderRepository.UpdateOrderAsync(order);
+
+                await _orderRepository.CreateOrderStatusLogAsync(new OrderStatusLogEntity
+                {
+                    OrderId = order.Id,
+                    OldStatus = oldStatus,
+                    NewStatus = order.Status,
+                    Note = "Payment canceled by user"
+                });
+
+                await _orderRepository.CreatePaymentLogAsync(paymentLog);
+
                 _logger.LogInformation("Updated order {OrderId} status to abandoned (previous status: {OldStatus}). " +
                     "User canceled payment.", order.Id, oldStatus);
             }
@@ -298,6 +369,7 @@ public class StripeWebhookManager : IStripeWebhookManager
             {
                 _logger.LogWarning("Order {OrderId} already has status {Status}, not marking as abandoned", 
                     order.Id, order.Status);
+                await _orderRepository.CreatePaymentLogAsync(paymentLog);
             }
         }
         catch (Exception ex)

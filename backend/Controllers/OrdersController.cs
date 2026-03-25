@@ -1,4 +1,5 @@
 using ShopAPI.Application.DTOs;
+using ShopAPI.Application.Interfaces.Managers;
 using ShopAPI.Common;
 namespace ShopAPI.Controllers;
 
@@ -81,6 +82,46 @@ public class OrdersController : ControllerBase
     {
         var orders = await _orderManager.GetAllOrdersAdminAsync();
         return Ok(orders);
+    }
+
+    /// <summary>
+    /// Retrieves order details including payment and status logs for the current user.
+    /// </summary>
+    [HttpGet("{id:int}/details")]
+    public async Task<IActionResult> GetOrderWithLogs(int id)
+    {
+        var order = await _orderManager.GetOrderWithLogsAsync(UserId, id);
+        return order is null ? NotFound() : Ok(order);
+    }
+
+    /// <summary>
+    /// Retrieves order details including payment and status logs for administrative purposes.
+    /// </summary>
+    [Authorize(Roles = "admin")]
+    [HttpGet("admin/{id:int}/details")]
+    public async Task<IActionResult> GetOrderWithLogsAdmin(int id)
+    {
+        var order = await _orderManager.GetOrderWithLogsAdminAsync(id);
+        return order is null ? NotFound() : Ok(order);
+    }
+
+    /// <summary>
+    /// Triggers cleanup of old payment and status logs.
+    /// Admin only endpoint for maintenance.
+    /// </summary>
+    [Authorize(Roles = "admin")]
+    [HttpPost("admin/cleanup-logs")]
+    public async Task<IActionResult> CleanupLogs([FromQuery] int paymentLogsDays = 90, [FromQuery] int statusLogsDays = 180)
+    {
+        try
+        {
+            await _orderManager.CleanupOldLogsAsync(paymentLogsDays, statusLogsDays);
+            return Ok(new { message = "Logs cleaned up successfully" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error cleaning up logs", error = ex.Message });
+        }
     }
 
     /// <summary>

@@ -19,6 +19,11 @@ public record OrderDto(int Id, string Status, decimal TotalAmount, DateTime Crea
 public record OrderItemDto(int ProductId, string ProductName, int Quantity, decimal UnitPrice);
 public record AdminOrderDto(int Id, string Status, decimal TotalAmount, DateTime CreatedAt, string UserName, string UserEmail, List<OrderItemDto> Items);
 public record ConfirmOrderResponseDto(int OrderId, string Message);
+public record OrderDetailDto(int Id, string Status, decimal TotalAmount, DateTime CreatedAt, List<OrderItemDto> Items, List<PaymentLogDto> PaymentLogs, List<StatusLogDto> StatusLogs);
+
+// Order Logs
+public record PaymentLogDto(int Id, string StripeEventId, string EventType, string PaymentIntentId, string Status, DateTime CreatedAt);
+public record StatusLogDto(int Id, string OldStatus, string NewStatus, string? Note, DateTime CreatedAt);
 
 // Payment
 public record PaymentIntentDto(string ClientSecret, string PaymentIntentId, decimal Amount);

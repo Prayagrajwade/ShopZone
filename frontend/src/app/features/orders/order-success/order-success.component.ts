@@ -24,4 +24,18 @@ export class OrderSuccessComponent implements OnInit {
       error: () => { this.loading = false; }
     });
   }
+
+  getStatusIcon(status: string): string {
+    const map: Record<string, string> = {
+      pending: '⏳', paid: '✅', on_the_way: '🚚', delivered: '📦'
+    };
+    return map[status] ?? '📋';
+  }
+
+  getStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      pending: 'Pending', paid: 'Paid', on_the_way: 'On the Way', delivered: 'Delivered'
+    };
+    return map[status] ?? status;
+  }
 }
