@@ -132,7 +132,9 @@ export class CheckoutComponent implements OnInit {
     this.orderService.confirmOrder(paymentIntent!.id).subscribe({
       next: (res) => {
         this.cartService.clearLocalCart();
-        this.router.navigate(['/order-success', res.orderId]);
+        this.cartService.clearCart().subscribe(() => {
+          this.router.navigate(['/order-success', res.orderId]);
+        });
       },
       error: (err) => {
         this.error = err.error?.message || 'Order confirmation failed.';

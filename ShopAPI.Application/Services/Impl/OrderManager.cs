@@ -63,6 +63,24 @@ public class OrderManager : IOrderManager
             _logger.LogInformation("PaymentIntent created successfully for UserId: {UserId}, PaymentIntentId: {PaymentIntentId}", 
                 userId, intent.Id);
 
+            var order = new OrderEntity
+            {
+                UserId = userId,
+                Status = "pending",
+                TotalAmount = total,
+                StripePaymentIntentId = intent.Id,
+                Items = cartItems.Select(c => new OrderItemEntity
+                {
+                    ProductId = c.ProductId,
+                    Quantity = c.Quantity,
+                    UnitPrice = c.Product!.Price
+                }).ToList()
+            };
+
+            await _orderRepository.CreateOrderAsync(order);
+            _logger.LogInformation("Order created (pending) for PaymentIntent: OrderId: {OrderId}, PaymentIntentId: {PaymentIntentId}", 
+                order.Id, intent.Id);
+
             return new PaymentIntentDto(intent.ClientSecret, intent.Id, total);
         }
         catch (Exception ex)
@@ -118,6 +136,27 @@ public class OrderManager : IOrderManager
             _logger.LogInformation("BuyNow PaymentIntent created successfully for UserId: {UserId}, PaymentIntentId: {PaymentIntentId}", 
                 userId, intent.Id);
 
+            var order = new OrderEntity
+            {
+                UserId = userId,
+                Status = "pending",
+                TotalAmount = productEntity.Price * dto.Quantity,
+                StripePaymentIntentId = intent.Id,
+                Items = new List<OrderItemEntity>
+                {
+                    new OrderItemEntity
+                    {
+                        ProductId = dto.ProductId,
+                        Quantity = dto.Quantity,
+                        UnitPrice = productEntity.Price
+                    }
+                }
+            };
+
+            await _orderRepository.CreateOrderAsync(order);
+            _logger.LogInformation("BuyNow order created (pending): OrderId: {OrderId}, PaymentIntentId: {PaymentIntentId}", 
+                order.Id, intent.Id);
+
             return new PaymentIntentDto(intent.ClientSecret, intent.Id, total);
         }
         catch (Exception ex)
@@ -136,112 +175,36 @@ public class OrderManager : IOrderManager
                 userId, paymentIntentId);
 
             StripeConfiguration.ApiKey = _config["Stripe:SecretKey"];
-
             var service = new PaymentIntentService();
             var intent = await service.GetAsync(paymentIntentId);
 
-            if (intent.Metadata != null &&
-                intent.Metadata.TryGetValue("type", out var type) &&
-                type == "buynow")
-            {
-                _logger.LogInformation("Processing BuyNow order for UserId: {UserId}", userId);
-
-                if (intent.Status != AppConstants.PaymentStatus.Succeeded)
-                {
-                    _logger.LogWarning("Payment not completed for BuyNow order: UserId: {UserId}, Status: {Status}", 
-                        userId, intent.Status);
-                    throw new BadRequestException("Payment not completed.");
-                }
-
-                var productId = int.Parse(intent.Metadata["productId"]);
-                var quantity = int.Parse(intent.Metadata["quantity"]);
-
-                var product = await _orderRepository.GetProductAsync(productId);
-
-                if (product == null)
-                {
-                    _logger.LogWarning("Product not found for BuyNow order: ProductId: {ProductId}", productId);
-                    throw new BadRequestException("Product not found");
-                }
-
-                if (product.Stock < quantity)
-                {
-                    _logger.LogWarning("Insufficient stock for BuyNow order: ProductId: {ProductId}, Required: {Required}, Available: {Available}", 
-                        productId, quantity, product.Stock);
-                    throw new BadRequestException($"Only {product.Stock} available");
-                }
-
-                product.Stock -= quantity;
-
-                var order = new OrderEntity
-                {
-                    UserId = userId,
-                    Status = AppConstants.OrderStatus.Paid,
-                    TotalAmount = product.Price * quantity,
-                    StripePaymentIntentId = paymentIntentId,
-                    Items = new List<OrderItemEntity>
-                    {
-                        new OrderItemEntity
-                        {
-                            ProductId = productId,
-                            Quantity = quantity,
-                            UnitPrice = product.Price
-                        }
-                    }
-                };
-
-                await _orderRepository.CreateOrderAsync(order);
-                _logger.LogInformation("BuyNow order created successfully: OrderId: {OrderId}, UserId: {UserId}, Amount: {Amount}", 
-                    order.Id, userId, order.TotalAmount);
-
-                return new ConfirmOrderResponseDto(order.Id, "Order placed successfully.");
-            }
-
-            _logger.LogInformation("Processing Cart order for UserId: {UserId}", userId);
-
-            var cartItems = await _orderRepository.GetUserCartItemsAsync(userId);
-
-            if (!cartItems.Any())
-            {
-                _logger.LogWarning("Cart is empty for Cart order: UserId: {UserId}", userId);
-                throw new BadRequestException("Cart is empty.");
-            }
-
             if (intent.Status != AppConstants.PaymentStatus.Succeeded)
             {
-                _logger.LogWarning("Payment not completed for Cart order: UserId: {UserId}, Status: {Status}", 
-                    userId, intent.Status);
-                throw new BadRequestException("Payment not completed.");
+                _logger.LogWarning("Payment not completed: Status: {Status}", intent.Status);
+                throw new BadRequestException("Payment not completed yet. Please wait.");
             }
 
-            var total = cartItems.Sum(c => c.Product!.Price * c.Quantity);
-
-            var cartOrder = new OrderEntity
+            var order = await _orderRepository.GetOrderByStripeIdAsync(paymentIntentId);
+            if (order == null)
             {
-                UserId = userId,
-                Status = AppConstants.OrderStatus.Paid,
-                TotalAmount = total,
-                StripePaymentIntentId = paymentIntentId,
-                Items = cartItems.Select(c => new OrderItemEntity
-                {
-                    ProductId = c.ProductId,
-                    Quantity = c.Quantity,
-                    UnitPrice = c.Product!.Price
-                }).ToList()
-            };
+                _logger.LogError("Order not found for PaymentIntentId: {PaymentIntentId}. " +
+                    "Order should have been created when PaymentIntent was created.", paymentIntentId);
+                throw new BadRequestException("Order not found. Please try again.");
+            }
 
-            await _orderRepository.CreateOrderAsync(cartOrder);
-            await _orderRepository.ClearUserCartAsync(userId);
+            _logger.LogInformation("Found existing order for confirmation: OrderId: {OrderId}, CurrentStatus: {CurrentStatus}", 
+                order.Id, order.Status);
 
-            _logger.LogInformation("Cart order created successfully: OrderId: {OrderId}, UserId: {UserId}, Amount: {Amount}, ItemCount: {ItemCount}", 
-                cartOrder.Id, userId, cartOrder.TotalAmount, cartOrder.Items.Count);
+            if (!string.IsNullOrEmpty(order.StripePaymentIntentId))
+            {
+                await _orderRepository.ClearUserCartAsync(userId);
+            }
 
-            return new ConfirmOrderResponseDto(cartOrder.Id, "Order placed successfully.");
+            return new ConfirmOrderResponseDto(order.Id, "Payment confirmed. Processing order...");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error confirming order for UserId: {UserId}, PaymentIntentId: {PaymentIntentId}", 
-                userId, paymentIntentId);
+            _logger.LogError(ex, "Error confirming order for UserId: {UserId}", userId);
             throw;
         }
     }

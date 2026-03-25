@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using ShopAPI.Application.DTOs;
 
 namespace ShopAPI.Controllers;

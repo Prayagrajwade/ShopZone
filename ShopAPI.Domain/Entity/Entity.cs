@@ -38,10 +38,13 @@ public class OrderEntity
 {
     public int Id { get; set; }
     public int UserId { get; set; }
-    public string Status { get; set; } = "pending";
+    public string Status { get; set; } = "pending"; 
     public decimal TotalAmount { get; set; }
     public string StripePaymentIntentId { get; set; } = "";
+    public string? WebhookEventId { get; set; }
+    public bool StockReserved { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
     public List<OrderItemEntity> Items { get; set; } = new();
     public UserEntity? User { get; set; }
 }

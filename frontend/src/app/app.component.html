@@ -23,7 +23,7 @@
         <a routerLink="/cart" routerLinkActive="active" class="nav-link cart-link">
           <span>Cart</span>
           <span class="cart-badge" *ngIf="cartService.cartCount > 0">
-            {{ cartService.cartCount }}
+            {{ cartCount }}
           </span>
         </a>
         <a routerLink="/orders" routerLinkActive="active" class="nav-link">My Orders</a>

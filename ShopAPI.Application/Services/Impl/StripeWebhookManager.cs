@@ -61,6 +61,11 @@ public class StripeWebhookManager : IStripeWebhookManager
                     await HandlePaymentFailed(stripeEvent);
                     break;
 
+                case "payment_intent.canceled":
+                    _logger.LogInformation("Handling payment canceled event (abandoned order)");
+                    await HandlePaymentCanceled(stripeEvent);
+                    break;
+
                 default:
                     _logger.LogWarning("Unhandled event type: {EventType}", stripeEvent.Type);
                     break;
@@ -90,18 +95,28 @@ public class StripeWebhookManager : IStripeWebhookManager
 
             if (order is null)
             {
-                _logger.LogWarning("Order not found for PaymentIntentId: {PaymentIntentId}, retrying after delay", intent.Id);
-                await Task.Delay(5000);
-                order = await _orderRepository.GetOrderByStripeIdAsync(intent.Id);
-
-                if (order is null)
-                {
-                    _logger.LogError("Order still not found after retry for PaymentIntentId: {PaymentIntentId}", intent.Id);
-                    return;
-                }
+                _logger.LogError("CRITICAL: Order not found for PaymentIntentId: {PaymentIntentId}. " +
+                    "Order should have been created when PaymentIntent was created.", intent.Id);
+                return;
             }
 
             _logger.LogInformation("Found order {OrderId} for PaymentIntentId: {PaymentIntentId}", order.Id, intent.Id);
+
+            if (!string.IsNullOrEmpty(order.WebhookEventId) && order.WebhookEventId == stripeEvent.Id)
+            {
+                _logger.LogInformation("Webhook already processed for this order: OrderId: {OrderId}, EventId: {EventId}. Skipping.", 
+                    order.Id, stripeEvent.Id);
+                return;
+            }
+
+            if (order.StockReserved)
+            {
+                _logger.LogInformation("Stock already reserved for order: OrderId: {OrderId}. Updating webhook tracking only.", order.Id);
+                order.WebhookEventId = stripeEvent.Id;
+                order.UpdatedAt = DateTime.UtcNow;
+                await _orderRepository.UpdateOrderAsync(order);
+                return;
+            }
 
             foreach (var item in order.Items)
             {
@@ -127,10 +142,13 @@ public class StripeWebhookManager : IStripeWebhookManager
 
             var oldStatus = order.Status;
             order.Status = AppConstants.OrderStatus.OnTheWay;
+            order.StockReserved = true;
+            order.WebhookEventId = stripeEvent.Id;
+            order.UpdatedAt = DateTime.UtcNow;
 
             await _orderRepository.UpdateOrderAsync(order);
-            _logger.LogInformation("Updated order {OrderId} status from {OldStatus} to {NewStatus}", 
-                order.Id, oldStatus, order.Status);
+            _logger.LogInformation("Updated order {OrderId} status from {OldStatus} to {NewStatus}. Stock reserved: true, WebhookEventId: {EventId}", 
+                order.Id, oldStatus, order.Status, stripeEvent.Id);
 
             var template = await _templateRepo.GetByTypeAsync(AppConstants.TemeplateType.Invoice);
             if (template is null)
@@ -241,6 +259,50 @@ public class StripeWebhookManager : IStripeWebhookManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in HandlePaymentFailed");
+            throw;
+        }
+    }
+
+    private async Task HandlePaymentCanceled(Event stripeEvent)
+    {
+        try
+        {
+            var intent = stripeEvent.Data.Object as PaymentIntent;
+            if (intent is null)
+            {
+                _logger.LogWarning("PaymentIntent is null in canceled event");
+                return;
+            }
+
+            _logger.LogInformation("Processing payment canceled for PaymentIntentId: {PaymentIntentId}", intent.Id);
+
+            var order = await _orderRepository.GetOrderByStripeIdAsync(intent.Id);
+            if (order is null)
+            {
+                _logger.LogWarning("Order not found for canceled PaymentIntentId: {PaymentIntentId}", intent.Id);
+                return;
+            }
+
+            var oldStatus = order.Status;
+
+            if (order.Status == "pending")
+            {
+                order.Status = "abandoned";
+                order.UpdatedAt = DateTime.UtcNow;
+
+                await _orderRepository.UpdateOrderAsync(order);
+                _logger.LogInformation("Updated order {OrderId} status to abandoned (previous status: {OldStatus}). " +
+                    "User canceled payment.", order.Id, oldStatus);
+            }
+            else
+            {
+                _logger.LogWarning("Order {OrderId} already has status {Status}, not marking as abandoned", 
+                    order.Id, order.Status);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in HandlePaymentCanceled");
             throw;
         }
     }

@@ -12,12 +12,17 @@ import { CartService } from './core/services/cart.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
+  cartCount = 0;
   constructor(public auth: AuthService, public cartService: CartService) {}
 
   ngOnInit() {
     if (this.auth.isLoggedIn) {
       this.cartService.loadCart().subscribe();
     }
+
+    this.cartService.cartItems$.subscribe(items => {
+      this.cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    });
   }
 
   logout() {
